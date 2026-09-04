@@ -1,0 +1,6 @@
+{
+  "name": "OpenDial",
+  "description": "The open-source, serverless speed dial with zero backend, E2EE AES-GCM encryption, live dials, fluid grid, and cloud sync.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

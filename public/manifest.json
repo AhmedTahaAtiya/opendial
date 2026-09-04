@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "OpenDial – Serverless Speed Dial",
+  "short_name": "OpenDial",
+  "version": "1.0.0",
+  "description": "Privacy-first, zero-backend browser speed dial and productivity cockpit with client-side E2EE.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "OpenDial Dashboard",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
