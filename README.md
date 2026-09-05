@@ -110,7 +110,7 @@ All dials, folders, notes, and preferences can be synced directly to your own pe
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/opendial.git
+   git clone https://github.com/AhmedTahaAtiya/opendial.git
    cd opendial
    ```
 
