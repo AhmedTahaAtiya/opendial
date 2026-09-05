@@ -69,6 +69,7 @@ export const INITIAL_SETTINGS: AppSettings = {
 export const INITIAL_SYNC_SETTINGS: SyncSettings = {
   enabled: false,
   provider: 'local',
+  // Legacy compatibility field. Cloud providers enforce encryption regardless of this value.
   e2eeEnabled: true,
   autoSyncIntervalMinutes: 0,
   webdav: {

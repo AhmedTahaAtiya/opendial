@@ -71,13 +71,11 @@ export class WebDAVSyncProvider implements ISyncProvider {
 
   async upload(data: ExportBackupData, password?: string): Promise<SyncResult> {
     try {
-      let body: string;
-      if (password) {
-        const encrypted = await encryptData(data, password);
-        body = JSON.stringify(encrypted, null, 2);
-      } else {
-        body = JSON.stringify(data, null, 2);
+      if (!password) {
+        return { success: false, message: 'Master password required for encrypted cloud upload.' };
       }
+      const encrypted = await encryptData(data, password);
+      const body = JSON.stringify(encrypted);
 
       const response = await fetch(this.getFileUrl(), {
         method: 'PUT',
@@ -123,24 +121,18 @@ export class WebDAVSyncProvider implements ISyncProvider {
       }
 
       const json = await response.json();
-      if (json.isEncrypted) {
-        if (!password) {
-          return { success: false, message: 'Encrypted backup found. Master password required.' };
-        }
-        const decrypted = await decryptData<ExportBackupData>(json, password);
-        return {
-          success: true,
-          message: 'Downloaded and decrypted backup successfully',
-          timestamp: decrypted.timestamp,
-          remoteData: decrypted,
-        };
+      if (json?.isEncrypted !== true) {
+        return { success: false, message: 'Cloud backup rejected: encrypted payload required.' };
       }
-
+      if (!password) {
+        return { success: false, message: 'Master password required for encrypted cloud download.' };
+      }
+      const decrypted = await decryptData<ExportBackupData>(json, password);
       return {
         success: true,
-        message: 'Downloaded backup successfully',
-        timestamp: json.timestamp,
-        remoteData: json,
+        message: 'Downloaded and decrypted backup successfully',
+        timestamp: decrypted.timestamp,
+        remoteData: decrypted,
       };
     } catch (e) {
       const err = e as Error;
@@ -185,13 +177,11 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
     }
 
     try {
-      let content: string;
-      if (password) {
-        const encrypted = await encryptData(data, password);
-        content = JSON.stringify(encrypted, null, 2);
-      } else {
-        content = JSON.stringify(data, null, 2);
+      if (!password) {
+        return { success: false, message: 'Master password required for encrypted cloud upload.' };
       }
+      const encrypted = await encryptData(data, password);
+      const content = JSON.stringify(encrypted);
 
       // Upload file multipart to Drive
       const fileName = this.config.fileName || 'opendial_backup.enc.json';
@@ -265,24 +255,18 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
       if (!fileRes.ok) throw new Error(`Drive download error ${fileRes.status}`);
       const json = await fileRes.json();
 
-      if (json.isEncrypted) {
-        if (!password) {
-          return { success: false, message: 'Encrypted backup found. Master password required.' };
-        }
-        const decrypted = await decryptData<ExportBackupData>(json, password);
-        return {
-          success: true,
-          message: 'Downloaded & decrypted backup from Google Drive',
-          timestamp: decrypted.timestamp,
-          remoteData: decrypted,
-        };
+      if (json?.isEncrypted !== true) {
+        return { success: false, message: 'Cloud backup rejected: encrypted payload required.' };
       }
-
+      if (!password) {
+        return { success: false, message: 'Master password required for encrypted cloud download.' };
+      }
+      const decrypted = await decryptData<ExportBackupData>(json, password);
       return {
         success: true,
-        message: 'Downloaded backup from Google Drive',
-        timestamp: json.timestamp,
-        remoteData: json,
+        message: 'Downloaded & decrypted backup from Google Drive',
+        timestamp: decrypted.timestamp,
+        remoteData: decrypted,
       };
     } catch (e) {
       return { success: false, message: `Google Drive download error: ${(e as Error).message}` };
@@ -322,13 +306,11 @@ export class OneDriveSyncProvider implements ISyncProvider {
       return { success: false, message: 'OneDrive token required' };
     }
     try {
-      let content: string;
-      if (password) {
-        const encrypted = await encryptData(data, password);
-        content = JSON.stringify(encrypted, null, 2);
-      } else {
-        content = JSON.stringify(data, null, 2);
+      if (!password) {
+        return { success: false, message: 'Master password required for encrypted cloud upload.' };
       }
+      const encrypted = await encryptData(data, password);
+      const content = JSON.stringify(encrypted);
 
       const fileName = this.config.fileName || 'opendial_backup.enc.json';
       const uploadRes = await fetch(
@@ -376,24 +358,18 @@ export class OneDriveSyncProvider implements ISyncProvider {
       if (!fileRes.ok) throw new Error(`OneDrive error ${fileRes.status}`);
 
       const json = await fileRes.json();
-      if (json.isEncrypted) {
-        if (!password) {
-          return { success: false, message: 'Encrypted backup found. Master password required.' };
-        }
-        const decrypted = await decryptData<ExportBackupData>(json, password);
-        return {
-          success: true,
-          message: 'Restored backup from OneDrive successfully',
-          timestamp: decrypted.timestamp,
-          remoteData: decrypted,
-        };
+      if (json?.isEncrypted !== true) {
+        return { success: false, message: 'Cloud backup rejected: encrypted payload required.' };
       }
-
+      if (!password) {
+        return { success: false, message: 'Master password required for encrypted cloud download.' };
+      }
+      const decrypted = await decryptData<ExportBackupData>(json, password);
       return {
         success: true,
-        message: 'Restored backup from OneDrive',
-        timestamp: json.timestamp,
-        remoteData: json,
+        message: 'Restored backup from OneDrive successfully',
+        timestamp: decrypted.timestamp,
+        remoteData: decrypted,
       };
     } catch (e) {
       return { success: false, message: `OneDrive download error: ${(e as Error).message}` };

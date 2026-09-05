@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:crypto": "tsx --test src/services/crypto.test.ts"
   },
   "dependencies": {
     "jszip": "^3.10.1",

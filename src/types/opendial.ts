@@ -119,10 +119,19 @@ export interface ExportBackupData {
 }
 
 export interface EncryptedPayload {
-  version: string;
+  version: '1';
   isEncrypted: true;
-  salt: string; // base64
-  iv: string; // base64
-  ciphertext: string; // base64
-  checksum?: string;
+  kdf: {
+    name: 'PBKDF2';
+    hash: 'SHA-256';
+    iterations: number;
+    salt: string; // base64
+  };
+  cipher: {
+    name: 'AES-GCM';
+    keyLength: 256;
+    iv: string; // base64
+    tagLength: 128;
+  };
+  ciphertext: string; // base64 ciphertext with the authentication tag appended
 }

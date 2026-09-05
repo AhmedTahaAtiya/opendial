@@ -28,9 +28,11 @@ All dials, folders, notes, and preferences can be synced directly to your own pe
 - **Adaptive Grid**: Fluid responsive layout scaling seamlessly from 4 to 7 customizable columns.
 
 ### 🔐 Zero-Knowledge Cryptography (E2EE)
-- **AES-GCM 256-bit Encryption**: Client-side cryptography leveraging standard Web Crypto API (`window.crypto.subtle`).
-- **PBKDF2 Key Derivation**: Passphrases salted with 100,000 rounds of PBKDF2-SHA256.
-- **BYOS (Bring Your Own Storage)**: Direct synchronization with WebDAV servers (e.g., Nextcloud, ownCloud) and Cloud vaults without intermediate proxy servers.
+- **AES-GCM 256-bit Encryption**: Client-side authenticated encryption using Web Crypto with a fresh 96-bit IV per operation.
+- **PBKDF2 Key Derivation**: Passphrases use a fresh 128-bit salt and 100,000 rounds of PBKDF2-SHA256 per operation.
+- **Mandatory Cloud E2EE**: WebDAV, Google Drive, and OneDrive never receive plaintext backups; plaintext cloud downloads are rejected.
+- **BYOS (Bring Your Own Storage)**: Direct synchronization with personal storage without intermediate proxy servers.
+- **Design details**: See [`docs/encryption.md`](docs/encryption.md) for payload format, workflows, password lifecycle, threat model, and limitations.
 
 ### 🚀 Speed Dial Types
 - **Standard Dials**: Custom thumbnails, background gradients, domain metadata, and Firefox Multi-Account Container badges.

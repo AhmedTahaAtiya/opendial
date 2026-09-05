@@ -39,7 +39,6 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   onRequireUnlock,
 }) => {
   const [provider, setProvider] = useState<SyncProviderType>(syncSettings.provider);
-  const [e2eeEnabled, setE2eeEnabled] = useState(syncSettings.e2eeEnabled);
 
   // WebDAV fields
   const [webdavUrl, setWebdavUrl] = useState(syncSettings.webdav.url);
@@ -65,7 +64,8 @@ export const SyncModal: React.FC<SyncModalProps> = ({
     return {
       ...syncSettings,
       provider,
-      e2eeEnabled,
+      // Always overwrite legacy persisted false values; cloud E2EE is not optional.
+      e2eeEnabled: true,
       webdav: {
         url: webdavUrl,
         username: webdavUser,
@@ -99,8 +99,8 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   };
 
   const handleUploadNow = async () => {
-    if (e2eeEnabled && !masterPassword) {
-      setSyncStatus({ success: false, message: 'Unlock the session to use encrypted sync.' });
+    if (provider !== 'local' && !masterPassword) {
+      setSyncStatus({ success: false, message: 'Unlock the session to use mandatory encrypted cloud sync.' });
       onRequireUnlock();
       return;
     }
@@ -111,10 +111,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
       onUpdateSyncSettings(config);
 
       const syncEngine = createSyncProvider(config);
-      const res = await syncEngine.upload(
-        currentBackupData,
-        e2eeEnabled ? masterPassword : undefined
-      );
+      const res = await syncEngine.upload(currentBackupData, masterPassword || undefined);
       setSyncStatus(res);
       if (res.success) {
         onUpdateSyncSettings({
@@ -130,8 +127,8 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   };
 
   const handleDownloadNow = async () => {
-    if (e2eeEnabled && !masterPassword) {
-      setSyncStatus({ success: false, message: 'Unlock the session to decrypt synced data.' });
+    if (provider !== 'local' && !masterPassword) {
+      setSyncStatus({ success: false, message: 'Unlock the session to decrypt synced cloud data.' });
       onRequireUnlock();
       return;
     }
@@ -140,7 +137,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
     try {
       const config = getCurrentConfig();
       const syncEngine = createSyncProvider(config);
-      const res = await syncEngine.download(e2eeEnabled ? masterPassword : undefined);
+      const res = await syncEngine.download(masterPassword || undefined);
       setSyncStatus(res);
 
       if (res.success && res.remoteData) {
@@ -207,19 +204,10 @@ export const SyncModal: React.FC<SyncModalProps> = ({
                   End-to-End Encryption (AES-GCM 256-bit)
                 </span>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer text-xs">
-                <input
-                  type="checkbox"
-                  checked={e2eeEnabled}
-                  onChange={(e) => setE2eeEnabled(e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-slate-900 border-slate-700"
-                />
-                <span className="text-emerald-400 font-semibold">E2EE Enabled</span>
-              </label>
+              <span className="text-emerald-400 font-semibold text-xs">Mandatory for cloud sync</span>
             </div>
 
-            {e2eeEnabled && (
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-xs text-slate-300">
                     Session vault is {masterPassword ? 'unlocked' : 'locked'}. The password is memory-only.
@@ -255,7 +243,6 @@ export const SyncModal: React.FC<SyncModalProps> = ({
                   </span>
                 </div>
               </div>
-            )}
           </div>
 
           {/* SYNC PROVIDER SELECTOR */}
