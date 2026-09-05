@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Compass,
   Lock,
+  KeyRound,
   Cloud,
   Clock,
   Plus,
@@ -25,6 +26,9 @@ interface NavbarProps {
   onOpenAddDial: () => void;
   onOpenSettings: () => void;
   onOpenImportExport: () => void;
+  isUnlocked: boolean;
+  onUnlock: () => void;
+  onLock: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -38,6 +42,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddDial,
   onOpenSettings,
   onOpenImportExport,
+  isUnlocked,
+  onUnlock,
+  onLock,
 }) => {
   const [timeString, setTimeString] = useState('');
   const [dateString, setDateString] = useState('');
@@ -165,6 +172,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isProductivityMode && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={isUnlocked ? onLock : onUnlock}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+              isUnlocked
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
+                : 'bg-[#141822] border-[#222a3a] text-slate-300 hover:bg-[#1a202c] hover:text-white'
+            }`}
+            title={isUnlocked ? 'Lock and clear the master password from memory' : 'Unlock encrypted operations for this session'}
+          >
+            {isUnlocked ? <Lock className="w-3.5 h-3.5" /> : <KeyRound className="w-3.5 h-3.5" />}
+            <span className="hidden md:inline">{isUnlocked ? 'Lock' : 'Unlock'}</span>
           </button>
 
           <button

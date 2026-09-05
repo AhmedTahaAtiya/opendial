@@ -25,7 +25,7 @@ interface SyncModalProps {
   currentBackupData: ExportBackupData;
   onRestoreBackupData: (data: ExportBackupData) => void;
   masterPassword: string;
-  onSetMasterPassword: (pwd: string) => void;
+  onRequireUnlock: () => void;
 }
 
 export const SyncModal: React.FC<SyncModalProps> = ({
@@ -36,12 +36,10 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   currentBackupData,
   onRestoreBackupData,
   masterPassword,
-  onSetMasterPassword,
+  onRequireUnlock,
 }) => {
   const [provider, setProvider] = useState<SyncProviderType>(syncSettings.provider);
   const [e2eeEnabled, setE2eeEnabled] = useState(syncSettings.e2eeEnabled);
-  const [passwordInput, setPasswordInput] = useState(masterPassword);
-  const [showPassword, setShowPassword] = useState(false);
 
   // WebDAV fields
   const [webdavUrl, setWebdavUrl] = useState(syncSettings.webdav.url);
@@ -61,7 +59,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
   if (!isOpen) return null;
 
-  const passwordStrength = checkPasswordStrength(passwordInput);
+  const passwordStrength = checkPasswordStrength(masterPassword);
 
   const getCurrentConfig = (): SyncSettings => {
     return {
@@ -101,17 +99,21 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   };
 
   const handleUploadNow = async () => {
+    if (e2eeEnabled && !masterPassword) {
+      setSyncStatus({ success: false, message: 'Unlock the session to use encrypted sync.' });
+      onRequireUnlock();
+      return;
+    }
     setIsSyncing(true);
     setSyncStatus(null);
     try {
       const config = getCurrentConfig();
-      onSetMasterPassword(passwordInput);
       onUpdateSyncSettings(config);
 
       const syncEngine = createSyncProvider(config);
       const res = await syncEngine.upload(
         currentBackupData,
-        e2eeEnabled ? passwordInput : undefined
+        e2eeEnabled ? masterPassword : undefined
       );
       setSyncStatus(res);
       if (res.success) {
@@ -128,13 +130,17 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   };
 
   const handleDownloadNow = async () => {
+    if (e2eeEnabled && !masterPassword) {
+      setSyncStatus({ success: false, message: 'Unlock the session to decrypt synced data.' });
+      onRequireUnlock();
+      return;
+    }
     setIsSyncing(true);
     setSyncStatus(null);
     try {
       const config = getCurrentConfig();
-      onSetMasterPassword(passwordInput);
       const syncEngine = createSyncProvider(config);
-      const res = await syncEngine.download(e2eeEnabled ? passwordInput : undefined);
+      const res = await syncEngine.download(e2eeEnabled ? masterPassword : undefined);
       setSyncStatus(res);
 
       if (res.success && res.remoteData) {
@@ -149,7 +155,6 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
   const handleSaveSettings = () => {
     const config = getCurrentConfig();
-    onSetMasterPassword(passwordInput);
     onUpdateSyncSettings(config);
     onClose();
   };
@@ -215,24 +220,19 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
             {e2eeEnabled && (
               <div className="space-y-2">
-                <label className="block text-xs font-medium text-slate-300">
-                  Master Vault Passphrase (used to derive PBKDF2 100k iteration key)
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="Enter your strong encryption passphrase..."
-                    className="w-full px-3 py-2 pr-20 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-emerald-500 font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[11px] text-slate-400 hover:text-slate-200"
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
-                  </button>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-slate-300">
+                    Session vault is {masterPassword ? 'unlocked' : 'locked'}. The password is memory-only.
+                  </span>
+                  {!masterPassword && (
+                    <button
+                      type="button"
+                      onClick={onRequireUnlock}
+                      className="shrink-0 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-emerald-400"
+                    >
+                      Unlock
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] pt-1">

@@ -29,6 +29,7 @@ import { WidgetsModal } from './components/WidgetsModal';
 import { SyncModal } from './components/SyncModal';
 import { ImportExportModal } from './components/ImportExportModal';
 import { SettingsModal } from './components/SettingsModal';
+import { UnlockModal } from './components/UnlockModal';
 
 export default function App() {
   // Core state with local storage persistence
@@ -47,9 +48,8 @@ export default function App() {
   const [syncSettings, setSyncSettings] = useState<SyncSettings>(() =>
     loadFromLocal<SyncSettings>('sync', INITIAL_SYNC_SETTINGS)
   );
-  const [masterPassword, setMasterPassword] = useState<string>(() =>
-    loadFromLocal<string>('pwd_cache', '')
-  );
+  // The master password is deliberately session-only and is never persisted.
+  const [masterPassword, setMasterPassword] = useState('');
 
   // Active navigation & view state
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
@@ -65,8 +65,14 @@ export default function App() {
   const [isSyncOpen, setIsSyncOpen] = useState(false);
   const [isImportExportOpen, setIsImportExportOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUnlockOpen, setIsUnlockOpen] = useState(false);
 
-  // Synchronize state changes to LocalStorage
+  // Remove any legacy persisted master password left by earlier releases.
+  useEffect(() => {
+    localStorage.removeItem(['opendial', 'pwd', 'cache'].join('_'));
+  }, []);
+
+  // Synchronize non-secret state changes to LocalStorage
   useEffect(() => {
     saveToLocal('dials', dials);
   }, [dials]);
@@ -86,10 +92,6 @@ export default function App() {
   useEffect(() => {
     saveToLocal('sync', syncSettings);
   }, [syncSettings]);
-
-  useEffect(() => {
-    saveToLocal('pwd_cache', masterPassword);
-  }, [masterPassword]);
 
   // Current backup state payload
   const currentBackupData: ExportBackupData = {
@@ -198,6 +200,7 @@ export default function App() {
     setNotes(INITIAL_NOTES);
     setSettings(INITIAL_SETTINGS);
     setSyncSettings(INITIAL_SYNC_SETTINGS);
+    setMasterPassword('');
     setActiveFolderId(null);
     setActiveTagFilter(null);
   };
@@ -265,6 +268,9 @@ export default function App() {
           onOpenAddDial={() => handleOpenAddDial(activeFolderId)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenImportExport={() => setIsImportExportOpen(true)}
+          isUnlocked={Boolean(masterPassword)}
+          onUnlock={() => setIsUnlockOpen(true)}
+          onLock={() => setMasterPassword('')}
         />
 
         {/* Global Search Bar (Optional based on preferences) */}
@@ -339,6 +345,15 @@ export default function App() {
       </div>
 
       {/* --- MODALS --- */}
+      <UnlockModal
+        isOpen={isUnlockOpen}
+        onClose={() => setIsUnlockOpen(false)}
+        onUnlock={(password) => {
+          setMasterPassword(password);
+          setIsUnlockOpen(false);
+        }}
+      />
+
       <EditDialModal
         isOpen={isEditDialOpen}
         onClose={() => setIsEditDialOpen(false)}
@@ -371,7 +386,7 @@ export default function App() {
         currentBackupData={currentBackupData}
         onRestoreBackupData={handleRestoreBackup}
         masterPassword={masterPassword}
-        onSetMasterPassword={setMasterPassword}
+        onRequireUnlock={() => setIsUnlockOpen(true)}
       />
 
       <ImportExportModal
@@ -381,6 +396,7 @@ export default function App() {
         onRestoreData={handleRestoreBackup}
         onAppendDials={handleAppendDials}
         masterPassword={masterPassword}
+        onRequireUnlock={() => setIsUnlockOpen(true)}
       />
 
       <SettingsModal

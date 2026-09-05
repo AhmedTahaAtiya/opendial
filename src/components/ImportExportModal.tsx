@@ -20,7 +20,8 @@ interface ImportExportModalProps {
   currentBackupData: ExportBackupData;
   onRestoreData: (data: ExportBackupData) => void;
   onAppendDials: (dials: DialItem[]) => void;
-  masterPassword?: string;
+  masterPassword: string;
+  onRequireUnlock: () => void;
 }
 
 export const ImportExportModal: React.FC<ImportExportModalProps> = ({
@@ -30,10 +31,9 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   onRestoreData,
   onAppendDials,
   masterPassword,
+  onRequireUnlock,
 }) => {
-  const [exportPassword, setExportPassword] = useState(masterPassword || '');
   const [encryptExport, setEncryptExport] = useState(true);
-  const [importPassword, setImportPassword] = useState('');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isGeneratingExtension, setIsGeneratingExtension] = useState(false);
 
@@ -49,11 +49,12 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       let filename = `opendial-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
       if (encryptExport) {
-        if (!exportPassword) {
-          setStatusMessage({ type: 'error', text: 'Passphrase required for encrypted export' });
+        if (!masterPassword) {
+          setStatusMessage({ type: 'error', text: 'Unlock the session before creating an encrypted export.' });
+          onRequireUnlock();
           return;
         }
-        const encrypted = await encryptData(currentBackupData, exportPassword);
+        const encrypted = await encryptData(currentBackupData, masterPassword);
         content = JSON.stringify(encrypted, null, 2);
         filename = `opendial-e2ee-${new Date().toISOString().slice(0, 10)}.opendial`;
       } else {
@@ -86,14 +87,16 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
       const parsed = JSON.parse(text);
 
       if (parsed.isEncrypted) {
-        if (!importPassword) {
+        if (!masterPassword) {
           setStatusMessage({
             type: 'error',
-            text: 'File is encrypted. Please enter the master passphrase below and re-select.',
+            text: 'File is encrypted. Unlock the session, then re-select the file.',
           });
+          onRequireUnlock();
+          e.target.value = '';
           return;
         }
-        const decrypted = await decryptData<ExportBackupData>(parsed, importPassword);
+        const decrypted = await decryptData<ExportBackupData>(parsed, masterPassword);
         onRestoreData(decrypted);
         setStatusMessage({ type: 'success', text: 'Encrypted backup decrypted and restored!' });
       } else if (parsed.dials && Array.isArray(parsed.dials)) {
@@ -256,17 +259,11 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </div>
 
             {encryptExport && (
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Export Passphrase
-                </label>
-                <input
-                  type="password"
-                  value={exportPassword}
-                  onChange={(e) => setExportPassword(e.target.value)}
-                  placeholder="Passphrase to protect this export file"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs font-mono"
-                />
+              <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900/60 p-2.5 text-xs text-slate-300">
+                <span>{masterPassword ? 'Session unlocked; the in-memory password will encrypt this file.' : 'Unlock the session to create an encrypted vault.'}</span>
+                {!masterPassword && (
+                  <button type="button" onClick={onRequireUnlock} className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 font-bold text-white hover:bg-sky-500">Unlock</button>
+                )}
               </div>
             )}
 
@@ -286,18 +283,11 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               Import & Migration
             </div>
 
-            {/* Password for encrypted imports */}
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Decryption Passphrase (if importing .opendial encrypted vault)
-              </label>
-              <input
-                type="password"
-                value={importPassword}
-                onChange={(e) => setImportPassword(e.target.value)}
-                placeholder="Master password of the imported file"
-                className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs font-mono"
-              />
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900/60 p-2.5 text-xs text-slate-300">
+              <span>Encrypted imports use the current session's memory-only master password.</span>
+              {!masterPassword && (
+                <button type="button" onClick={onRequireUnlock} className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 font-bold text-white hover:bg-sky-500">Unlock</button>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
