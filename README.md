@@ -188,3 +188,11 @@ Contributions, feature ideas, and pull requests are welcome!
 ## 📄 License
 
 Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+## Extension build (Phase 2)
+
+Run `npm run build:extension`. This performs a production Vite build, copies only compiled app/public assets to `extension-dist/`, and creates `opendial-extension.zip`. Load `extension-dist/` unpacked in a Chromium browser.
+
+The Manifest V3 extension replaces New Tab with the same locally bundled React application. Asset URLs are relative for `chrome-extension://` execution; scripts and styles are self-hosted; source maps are disabled; and the manifest requests no extension or host permissions. Browser links, optional weather, and user-configured personal sync still require network access when invoked, but the dashboard shell and saved local data work offline.
+
+Permission audit: `tabs` is unnecessary because normal `window.open` navigation needs no extension API; `bookmarks` is unnecessary because bookmarks are imported from an HTML file; `contextualIdentities` is unused because container labels are display metadata only. `storage` and `unlimitedStorage` are also unnecessary because the app uses standard localStorage/IndexedDB.
