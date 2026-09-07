@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Globe,
@@ -68,6 +68,65 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
   // Custom thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState(initialDial?.customThumbnail || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync internal state whenever modal opens or initialDial/defaultFolderId changes
+  useEffect(() => {
+    if (!isOpen) return;
+    if (initialDial) {
+      setType(initialDial.type || 'standard');
+      setTitle(initialDial.title || '');
+      setUrl(initialDial.url || '');
+      setFolderId(initialDial.folderId !== undefined ? initialDial.folderId : defaultFolderId || null);
+      setContainer(initialDial.container || 'none');
+      setColSpan(initialDial.colSpan || 1);
+      setRowSpan(initialDial.rowSpan || 1);
+      setTagsInput(initialDial.tags?.join(', ') || '');
+      setBgColor(initialDial.bgColor || '');
+      setIsDistracting(initialDial.isDistracting || false);
+      setLiveUrl(initialDial.liveUrl || '');
+      setLiveZoom(initialDial.liveZoom || 100);
+      setLiveCropTop(initialDial.liveCropTop || 0);
+      setLiveRefreshInterval(initialDial.liveRefreshInterval || 0);
+      setMultiLinks(
+        initialDial.multiLinks || [
+          { id: '1', title: 'Home', url: 'https://example.com' },
+          { id: '2', title: 'Dashboard', url: 'https://example.com/dash' },
+        ]
+      );
+      setWeatherLocation(initialDial.weatherLocation || '');
+      setThumbnailUrl(initialDial.customThumbnail || '');
+    } else {
+      setType('standard');
+      setTitle('');
+      setUrl('');
+      setFolderId(defaultFolderId || null);
+      setContainer('none');
+      setColSpan(1);
+      setRowSpan(1);
+      setTagsInput('');
+      setBgColor('');
+      setIsDistracting(false);
+      setLiveUrl('');
+      setLiveZoom(100);
+      setLiveCropTop(0);
+      setLiveRefreshInterval(0);
+      setMultiLinks([
+        { id: '1', title: 'Home', url: 'https://example.com' },
+        { id: '2', title: 'Dashboard', url: 'https://example.com/dash' },
+      ]);
+      setWeatherLocation('');
+      setThumbnailUrl('');
+    }
+  }, [isOpen, initialDial, defaultFolderId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -150,7 +209,12 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+    >
       <div
         className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150 text-slate-100"
         id="edit-dial-modal-container"
@@ -272,7 +336,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           )}
 
-          {/* WEATHER SPECIFIC */}
+          {/* Weather dial settings */}
           {type === 'weather' && (
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
@@ -291,7 +355,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           )}
 
-          {/* LIVE DIAL SPECIFIC */}
+          {/* Live dial settings */}
           {type === 'live' && (
             <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
               <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
@@ -355,7 +419,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           )}
 
-          {/* MULTI-PAGE SPECIFIC */}
+          {/* Multi-page links */}
           {type === 'multipage' && (
             <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
               <div className="flex items-center justify-between">
@@ -402,7 +466,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           )}
 
-          {/* GRID SIZING & CONTAINER */}
+          {/* Grid sizing and container */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
@@ -451,7 +515,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           </div>
 
-          {/* FOLDER & TAGS */}
+          {/* Folder and tags */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
@@ -485,7 +549,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           </div>
 
-          {/* CUSTOM THUMBNAIL & BACKGROUND COLOR */}
+          {/* Custom thumbnail and background color */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
@@ -540,7 +604,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
             </div>
           </div>
 
-          {/* PRODUCTIVITY / FOCUS MODE FLAG */}
+          {/* Focus mode preference */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
             <div>
               <div className="text-xs font-semibold text-slate-200">

@@ -36,7 +36,6 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'timer' | 'notes' | 'recents'>('timer');
 
-  // --- TIMER STATE ---
   const [timerMode, setTimerMode] = useState<'countdown' | 'stopwatch'>('countdown');
 
   // Countdown state
@@ -90,6 +89,15 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
     };
   }, [isStopwatchRunning, stopwatchMs]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   // Format helpers
@@ -130,7 +138,12 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+    >
       <div
         className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-slate-100"
         id="widgets-modal-container"
@@ -183,7 +196,7 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
           </button>
         </div>
 
-        {/* TAB 1: TIMERS (Stopwatch & Countdown) */}
+        {/* Timers */}
         {activeTab === 'timer' && (
           <div className="p-6">
             {/* Mode Switcher */}
@@ -347,7 +360,7 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: NOTES & TODOS */}
+        {/* Notes & tasks */}
         {activeTab === 'notes' && (
           <div className="p-6 space-y-4">
             <form onSubmit={handleNoteSubmit} className="flex gap-2">
@@ -407,7 +420,7 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
           </div>
         )}
 
-        {/* TAB 3: RECENTLY CLOSED TABS */}
+        {/* Recent tabs */}
         {activeTab === 'recents' && (
           <div className="p-6 space-y-3">
             <div className="text-xs text-slate-400">

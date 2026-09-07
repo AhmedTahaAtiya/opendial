@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Lock,
@@ -59,6 +59,15 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncResult | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -171,7 +180,12 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+    >
       <div
         className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150 text-slate-100"
         id="sync-modal-container"
@@ -209,7 +223,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
             </div>
           </div>
 
-          {/* E2EE MASTER ENCRYPTION PASSWORD */}
+          {/* Master encryption password */}
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -259,7 +273,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
               </div>
           </div>
 
-          {/* SYNC PROVIDER SELECTOR */}
+          {/* Sync provider selector */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Select Sync Provider
@@ -331,7 +345,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
             </div>
           </div>
 
-          {/* PROVIDER SPECIFIC CONFIGURATION */}
+          {/* Provider configuration */}
           {provider === 'webdav' && (
             <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
               <div className="text-xs font-bold text-sky-400 uppercase tracking-wider">

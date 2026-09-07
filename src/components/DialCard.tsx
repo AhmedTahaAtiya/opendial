@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ExternalLink,
   MoreVertical,
@@ -54,6 +54,29 @@ export const DialCard: React.FC<DialCardProps> = ({
   onRecordClick,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close context menu on outside click or Escape
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [showMenu]);
+
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [isMultiOpen, setIsMultiOpen] = useState(false);
@@ -189,9 +212,9 @@ export const DialCard: React.FC<DialCardProps> = ({
     }
   }, [dial.type, dial.liveRefreshInterval]);
 
-  const handleDialClick = (e: React.MouseEvent) => {
-    // If clicking menu buttons, prevent navigating
-    if ((e.target as HTMLElement).closest('.dial-actions-menu')) {
+  const handleDialClick = (e: React.MouseEvent | React.KeyboardEvent) => {
+    // If clicking menu buttons or inner interactive elements, prevent navigating
+    if ((e.target as HTMLElement).closest('.dial-actions-menu, button, a, input, textarea, select')) {
       return;
     }
 
@@ -263,101 +286,180 @@ export const DialCard: React.FC<DialCardProps> = ({
   const isNumbered = showHotkeys && index !== undefined && index < 9;
 
   // Render Action Menu Dropdown
-  const renderActionMenu = () => (
-    <div className="dial-actions-menu absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
-      <div className="relative">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowMenu(!showMenu);
-          }}
-          className="p-1 rounded-md bg-[#0c1018]/90 hover:bg-[#1a2232] text-slate-400 hover:text-slate-100 border border-[#232c3d] shadow-sm"
-          title="Dial Options"
-        >
-          <MoreVertical className="w-3.5 h-3.5" />
-        </button>
-
-        {showMenu && (
-          <div
-            className="absolute right-0 top-full mt-1 w-44 bg-[#121620] border border-[#232c3d] rounded-xl shadow-2xl backdrop-blur-md py-1 z-50 text-xs text-slate-200"
-            onClick={(e) => e.stopPropagation()}
+  const renderActionMenu = () => {
+    return (
+      <div
+        ref={menuRef}
+        className={`dial-actions-menu absolute top-2 right-2 z-50 flex items-center gap-1 transition-opacity ${
+          showMenu ? 'opacity-100 pointer-events-auto' : 'opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        {dial.type === 'folder' && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onDelete(dial.id);
+            }}
+            className="p-1 rounded-md bg-[#0c1018]/90 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-[#232c3d] hover:border-rose-500/40 shadow-sm cursor-pointer transition-colors"
+            title="Delete Folder"
           >
-            <button
-              type="button"
-              onClick={() => {
-                setShowMenu(false);
-                onEdit(dial);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#1a2130] text-left"
-            >
-              <Edit2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>Edit Dial</span>
-            </button>
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setShowMenu(false);
-                onToggleSpan(dial.id);
+        <div className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowMenu(!showMenu);
+            }}
+            className="p-1 rounded-md bg-[#0c1018]/90 hover:bg-[#1a2232] text-slate-400 hover:text-slate-100 border border-[#232c3d] shadow-sm cursor-pointer"
+            title={dial.type === 'folder' ? 'Folder Options' : 'Dial Options'}
+          >
+            <MoreVertical className="w-3.5 h-3.5" />
+          </button>
+
+          {showMenu && (
+            <div
+              className="absolute right-0 top-full mt-1 w-48 bg-[#121620] border border-[#2e3b52] rounded-xl shadow-2xl backdrop-blur-md py-1 z-50 text-xs text-slate-200 divide-y divide-[#1e2738]"
+              onClick={(e) => {
+                e.stopPropagation();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#1a2130] text-left"
             >
-              {dial.colSpan === 2 ? (
-                <>
-                  <Minimize2 className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Shrink Size (1x1)</span>
-                </>
+              {dial.type === 'folder' ? (
+                <div className="py-0.5">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowMenu(false);
+                      if (dial.folderId && onOpenFolder) {
+                        onOpenFolder(dial.folderId);
+                      }
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[#1a2130] text-left cursor-pointer transition-colors"
+                  >
+                    <Folder className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="font-medium text-slate-100">Open Drawer</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setShowMenu(false);
+                      onDelete(dial.id);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-500/15 text-rose-400 text-left cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="font-medium">Delete Folder</span>
+                  </button>
+                </div>
               ) : (
                 <>
-                  <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Expand Size (2x1)</span>
+                  <div className="py-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setShowMenu(false);
+                        onEdit(dial);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[#1a2130] text-left cursor-pointer transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="font-medium text-slate-100">Edit Dial</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setShowMenu(false);
+                        onToggleSpan(dial.id);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[#1a2130] text-left cursor-pointer transition-colors"
+                    >
+                      {dial.colSpan === 2 ? (
+                        <>
+                          <Minimize2 className="w-3.5 h-3.5 text-sky-400" />
+                          <span className="font-medium text-slate-100">Shrink Size (1x1)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
+                          <span className="font-medium text-slate-100">Expand Size (2x1)</span>
+                        </>
+                      )}
+                    </button>
+
+                    {dial.type === 'live' && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setShowMenu(false);
+                          setIframeRefreshKey((k) => k + 1);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[#1a2130] text-left cursor-pointer transition-colors"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="font-medium text-slate-100">Refresh Live Monitor</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="py-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setShowMenu(false);
+                        onDelete(dial.id);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-500/15 text-rose-400 text-left cursor-pointer transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="font-medium">Remove Dial</span>
+                    </button>
+                  </div>
                 </>
               )}
-            </button>
-
-            {dial.type === 'live' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenu(false);
-                  setIframeRefreshKey((k) => k + 1);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#1a2130] text-left"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Refresh Live Monitor</span>
-              </button>
-            )}
-
-            <div className="h-px bg-[#202838] my-1" />
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowMenu(false);
-                onDelete(dial.id);
-              }}
-              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-500/15 text-rose-400 text-left"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Remove Dial</span>
-            </button>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  /* =================================================================
-     COMPACT VIEW (Ultra-dense Cockpit Mode for high speed productivity)
-     ================================================================= */
+  // Compact view layout
   if (viewDensity === 'compact' && dial.type === 'standard') {
     return (
       <div
         id={`dial-card-${dial.id}`}
+        role="button"
+        tabIndex={0}
         onClick={handleDialClick}
-        className="group relative flex items-center justify-between px-3 py-2 rounded-lg border border-[#202838] hover:border-amber-500/50 bg-[#121620] hover:bg-[#161c28] transition-all cursor-pointer shadow-sm"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleDialClick(e);
+          }
+        }}
+        className={`group relative flex items-center justify-between px-3 py-2 rounded-lg border border-[#202838] hover:border-amber-500/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 focus:outline-none bg-[#121620] hover:bg-[#161c28] transition-all cursor-pointer shadow-sm ${
+          showMenu ? 'overflow-visible z-40' : 'overflow-hidden z-0'
+        }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
           {isNumbered && (
@@ -399,14 +501,22 @@ export const DialCard: React.FC<DialCardProps> = ({
     );
   }
 
-  /* =================================================================
-     STANDARD & EDITORIAL VIEW
-     ================================================================= */
+  // Standard and editorial view layout
   return (
     <div
       id={`dial-card-${dial.id}`}
+      role="button"
+      tabIndex={0}
       onClick={handleDialClick}
-      className={`group relative flex flex-col justify-between rounded-xl border border-[#202838] hover:border-amber-500/50 bg-[#121620] hover:bg-[#161c28] shadow-sm hover:shadow-lg transition-all duration-150 overflow-hidden cursor-pointer ${colSpanClass} ${rowSpanClass} ${
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleDialClick(e);
+        }
+      }}
+      className={`group relative flex flex-col justify-between rounded-xl border border-[#202838] hover:border-amber-500/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 focus:outline-none bg-[#121620] hover:bg-[#161c28] shadow-sm hover:shadow-lg transition-all duration-150 cursor-pointer ${
+        showMenu ? 'overflow-visible z-40' : 'overflow-hidden z-0'
+      } ${colSpanClass} ${rowSpanClass} ${
         dial.rowSpan === 2 ? 'min-h-[280px]' : viewDensity === 'editorial' ? 'min-h-[155px]' : 'min-h-[136px]'
       }`}
       style={{

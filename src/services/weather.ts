@@ -110,6 +110,24 @@ export async function fetchWeatherForCoords(lat: number, lon: number, customLabe
       lastUpdated: Date.now(),
     };
   } catch {
+    const today = new Date();
+    const fallbackForecast: WeatherDayForecast[] = [
+      { weatherCode: 0, tempMax: 22, tempMin: 14, condition: 'Sunny', icon: '☀️' },
+      { weatherCode: 1, tempMax: 24, tempMin: 15, condition: 'Mainly clear', icon: '🌤️' },
+      { weatherCode: 2, tempMax: 20, tempMin: 13, condition: 'Partly cloudy', icon: '⛅' },
+      { weatherCode: 61, tempMax: 18, tempMin: 12, condition: 'Light rain', icon: '🌦️' },
+      { weatherCode: 0, tempMax: 21, tempMin: 13, condition: 'Sunny', icon: '☀️' },
+    ].map((item, idx) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + idx);
+      const dayName = idx === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' });
+      return {
+        ...item,
+        date: d.toISOString().slice(0, 10),
+        dayName,
+      };
+    });
+
     return {
       city: customLabel || 'Local Weather',
       temperature: 21,
@@ -117,13 +135,7 @@ export async function fetchWeatherForCoords(lat: number, lon: number, customLabe
       icon: '☀️',
       humidity: 45,
       windSpeed: 10,
-      forecast: [
-        { date: '2026-09-04', dayName: 'Today', weatherCode: 0, tempMax: 22, tempMin: 14, condition: 'Sunny', icon: '☀️' },
-        { date: '2026-09-05', dayName: 'Fri', weatherCode: 1, tempMax: 24, tempMin: 15, condition: 'Mainly clear', icon: '🌤️' },
-        { date: '2026-09-06', dayName: 'Sat', weatherCode: 2, tempMax: 20, tempMin: 13, condition: 'Partly cloudy', icon: '⛅' },
-        { date: '2026-09-07', dayName: 'Sun', weatherCode: 61, tempMax: 18, tempMin: 12, condition: 'Light rain', icon: '🌦️' },
-        { date: '2026-09-08', dayName: 'Mon', weatherCode: 0, tempMax: 21, tempMin: 13, condition: 'Sunny', icon: '☀️' },
-      ],
+      forecast: fallbackForecast,
       lastUpdated: Date.now(),
     };
   }

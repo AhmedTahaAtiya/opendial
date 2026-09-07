@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   X,
   Sliders,
@@ -28,10 +28,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
   onResetDefaults,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto font-sans">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto font-sans"
+    >
       <div
         className="relative w-full max-w-lg bg-[#0f141d] border border-[#20293a] rounded-2xl shadow-2xl overflow-hidden my-8 text-slate-100 animate-in fade-in zoom-in-95 duration-150"
         id="settings-modal-container"
@@ -53,7 +67,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <div className="p-5 space-y-5 max-h-[80vh] overflow-y-auto">
-          {/* VIEW DENSITY */}
+          {/* View density */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -92,7 +106,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* THEME SELECTOR */}
+          {/* Theme selector */}
           <div>
             <label className="block text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Palette className="w-3.5 h-3.5 text-amber-400" />
@@ -116,7 +130,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* BACKGROUND STYLE */}
+          {/* Background style */}
           <div>
             <label className="block text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Monitor className="w-3.5 h-3.5 text-amber-400" />
@@ -154,7 +168,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             )}
           </div>
 
-          {/* GRID COLUMNS */}
+          {/* Grid columns */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -180,7 +194,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* DEFAULT SEARCH ENGINE */}
+          {/* Default search engine */}
           <div>
             <label className="block text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Search className="w-3.5 h-3.5 text-amber-400" />
@@ -199,7 +213,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </select>
           </div>
 
-          {/* TOGGLES */}
+          {/* Preferences */}
           <div className="p-4 rounded-xl bg-[#131924] border border-[#1f2838] space-y-3">
             <div className="text-[11px] font-mono font-bold text-slate-300 uppercase tracking-wider">
               Control Surfaces & Accelerators

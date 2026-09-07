@@ -3,33 +3,16 @@
  * Zero Centralized Backend | E2EE First (AES-GCM 256-bit) | Pluggable Cloud Sync
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  DialItem,
-  FolderItem,
-  NoteItem,
-  AppSettings,
-  SyncSettings,
-  SyncCredentials,
-  ExportBackupData,
-} from './types/opendial';
-import {
-  INITIAL_DIALS,
-  INITIAL_FOLDERS,
-  INITIAL_NOTES,
-  INITIAL_SETTINGS,
-  INITIAL_SYNC_SETTINGS,
-} from './data/initialData';
-import {
-  loadFromLocal,
-  saveToLocal,
-  clearAllStorage,
-  loadSyncSettings,
-  loadSyncCredentials,
-  saveSyncCredentials,
-  clearSyncCredentials,
-} from './services/storage';
-import { createPortableBackup, sanitizeImportedBackup, sanitizeSyncSettings } from './services/backup';
+import React from 'react';
+import { useDials } from './hooks/useDials';
+import { useFolders } from './hooks/useFolders';
+import { useNotes } from './hooks/useNotes';
+import { useSettings } from './hooks/useSettings';
+import { useSync } from './hooks/useSync';
+import { useVault } from './hooks/useVault';
+import { useModals } from './hooks/useModals';
+import { useBackup } from './hooks/useBackup';
+
 import { Navbar } from './components/Navbar';
 import { SearchBar } from './components/SearchBar';
 import { DialGrid } from './components/DialGrid';
@@ -42,213 +25,115 @@ import { SettingsModal } from './components/SettingsModal';
 import { UnlockModal } from './components/UnlockModal';
 
 export default function App() {
-  // Core state with local storage persistence
-  const [dials, setDials] = useState<DialItem[]>(() =>
-    loadFromLocal<DialItem[]>('dials', INITIAL_DIALS)
-  );
-  const [folders, setFolders] = useState<FolderItem[]>(() =>
-    loadFromLocal<FolderItem[]>('folders', INITIAL_FOLDERS)
-  );
-  const [notes, setNotes] = useState<NoteItem[]>(() =>
-    loadFromLocal<NoteItem[]>('notes', INITIAL_NOTES)
-  );
-  const [settings, setSettings] = useState<AppSettings>(() =>
-    loadFromLocal<AppSettings>('settings', INITIAL_SETTINGS)
-  );
-  const [syncSettings, setSyncSettings] = useState<SyncSettings>(() =>
-    loadSyncSettings(INITIAL_SYNC_SETTINGS)
-  );
-  const [syncCredentials, setSyncCredentials] = useState<SyncCredentials>(() =>
-    loadSyncCredentials()
-  );
-  // The master password is deliberately session-only and is never persisted.
-  const [masterPassword, setMasterPassword] = useState('');
+  const {
+    dials,
+    setDials,
+    saveDial,
+    deleteDial,
+    toggleSpan,
+    recordClick,
+    appendDials,
+    orphanFolderDials,
+    resetDials,
+  } = useDials();
 
-  // Active navigation & view state
-  const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
-  const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
+  const {
+    folders,
+    setFolders,
+    activeFolderId,
+    setActiveFolderId,
+    activeTagFilter,
+    setActiveTagFilter,
+    saveFolder,
+    deleteFolder,
+    resetFolders,
+  } = useFolders();
 
-  // Modals state
-  const [isEditDialOpen, setIsEditDialOpen] = useState(false);
-  const [editingDial, setEditingDial] = useState<DialItem | null>(null);
-  const [targetFolderForNewDial, setTargetFolderForNewDial] = useState<string | null>(null);
+  const {
+    notes,
+    setNotes,
+    addNote,
+    toggleNote,
+    deleteNote,
+    resetNotes,
+  } = useNotes();
 
-  const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
-  const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
-  const [isSyncOpen, setIsSyncOpen] = useState(false);
-  const [isImportExportOpen, setIsImportExportOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isUnlockOpen, setIsUnlockOpen] = useState(false);
+  const {
+    settings,
+    setSettings,
+    toggleProductivity,
+    changeDensity,
+    changeSearchEngine,
+    getThemeClass,
+    getBackgroundInlineStyle,
+    resetSettings,
+  } = useSettings();
 
-  // Remove any legacy persisted master password left by earlier releases.
-  useEffect(() => {
-    localStorage.removeItem(['opendial', 'pwd', 'cache'].join('_'));
-  }, []);
+  const {
+    syncSettings,
+    setSyncSettings,
+    syncCredentials,
+    setSyncCredentials,
+    resetSync,
+  } = useSync();
 
-  // Synchronize non-secret state changes to LocalStorage
-  useEffect(() => {
-    saveToLocal('dials', dials);
-  }, [dials]);
+  const {
+    masterPassword,
+    isUnlocked,
+    unlock,
+    lock,
+    resetVault,
+  } = useVault();
 
-  useEffect(() => {
-    saveToLocal('folders', folders);
-  }, [folders]);
+  const {
+    isEditDialOpen,
+    editingDial,
+    targetFolderForNewDial,
+    openAddDial,
+    openEditDial,
+    closeEditDial,
+    isNewFolderOpen,
+    openNewFolder,
+    closeNewFolder,
+    isWidgetsOpen,
+    openWidgets,
+    closeWidgets,
+    isSyncOpen,
+    openSync,
+    closeSync,
+    isImportExportOpen,
+    openImportExport,
+    closeImportExport,
+    isSettingsOpen,
+    openSettings,
+    closeSettings,
+    isUnlockOpen,
+    openUnlock,
+    closeUnlock,
+  } = useModals();
 
-  useEffect(() => {
-    saveToLocal('notes', notes);
-  }, [notes]);
-
-  useEffect(() => {
-    saveToLocal('settings', settings);
-  }, [settings]);
-
-  useEffect(() => {
-    saveToLocal('sync', sanitizeSyncSettings(syncSettings));
-  }, [syncSettings]);
-
-  useEffect(() => {
-    saveSyncCredentials(syncCredentials);
-  }, [syncCredentials]);
-
-  // Current portable backup state payload (credentials are structurally excluded).
-  const currentBackupData: ExportBackupData = createPortableBackup({
+  const { currentBackupData, restoreBackup, resetDefaults } = useBackup({
     dials,
     folders,
     notes,
     settings,
     syncSettings,
+    setDials,
+    setFolders,
+    setNotes,
+    setSettings,
+    setSyncSettings,
+    resetVault,
+    resetSync,
+    resetFolders,
+    resetDials,
+    resetNotes,
+    resetSettings,
   });
 
-  // --- DIAL HANDLERS ---
-  const handleSaveDial = (dial: DialItem) => {
-    if (editingDial) {
-      setDials(dials.map((d) => (d.id === dial.id ? dial : d)));
-    } else {
-      setDials([dial, ...dials]);
-    }
-  };
-
-  const handleDeleteDial = (dialId: string) => {
-    setDials(dials.filter((d) => d.id !== dialId));
-  };
-
-  const handleToggleSpan = (dialId: string) => {
-    setDials(
-      dials.map((d) => {
-        if (d.id === dialId) {
-          const newSpan = d.colSpan === 2 ? 1 : 2;
-          return { ...d, colSpan: newSpan as 1 | 2 };
-        }
-        return d;
-      })
-    );
-  };
-
-  const handleRecordClick = (dialId: string) => {
-    setDials(
-      dials.map((d) => {
-        if (d.id === dialId) {
-          return { ...d, clicksCount: (d.clicksCount || 0) + 1 };
-        }
-        return d;
-      })
-    );
-  };
-
-  const handleOpenAddDial = (folderId?: string | null) => {
-    setEditingDial(null);
-    setTargetFolderForNewDial(folderId !== undefined ? folderId : activeFolderId);
-    setIsEditDialOpen(true);
-  };
-
-  const handleOpenEditDial = (dial: DialItem) => {
-    setEditingDial(dial);
-    setTargetFolderForNewDial(dial.folderId || null);
-    setIsEditDialOpen(true);
-  };
-
-  // --- FOLDER HANDLERS ---
-  const handleSaveFolder = (folder: FolderItem) => {
-    setFolders([...folders, folder]);
-  };
-
-  // --- NOTES HANDLERS ---
-  const handleAddNote = (text: string) => {
-    const newNote: NoteItem = {
-      id: `note_${Date.now()}`,
-      text,
-      isCompleted: false,
-      createdAt: Date.now(),
-    };
-    setNotes([newNote, ...notes]);
-  };
-
-  const handleToggleNote = (id: string) => {
-    setNotes(
-      notes.map((n) => (n.id === id ? { ...n, isCompleted: !n.isCompleted } : n))
-    );
-  };
-
-  const handleDeleteNote = (id: string) => {
-    setNotes(notes.filter((n) => n.id !== id));
-  };
-
-  // --- RESTORE DATA ---
-  const handleRestoreBackup = (data: ExportBackupData) => {
-    const restored = sanitizeImportedBackup(data);
-    setDials(restored.dials);
-    setFolders(restored.folders);
-    setNotes(restored.notes);
-    if (restored.settings) setSettings(restored.settings);
-    setSyncSettings(restored.syncSettings);
-    setSyncCredentials({ webdavPassword: '', googleAccessToken: '', oneDriveAccessToken: '' });
-    clearSyncCredentials();
-  };
-
-  const handleAppendDials = (imported: DialItem[]) => {
-    setDials([...imported, ...dials]);
-  };
-
-  const handleResetDefaults = () => {
-    clearAllStorage();
-    setDials(INITIAL_DIALS);
-    setFolders(INITIAL_FOLDERS);
-    setNotes(INITIAL_NOTES);
-    setSettings(INITIAL_SETTINGS);
-    setSyncSettings(INITIAL_SYNC_SETTINGS);
-    setSyncCredentials({ webdavPassword: '', googleAccessToken: '', oneDriveAccessToken: '' });
-    setMasterPassword('');
-    setActiveFolderId(null);
-    setActiveTagFilter(null);
-  };
-
-  // --- BACKGROUND & THEME CLASS ---
-  const getThemeClass = () => {
-    switch (settings.theme) {
-      case 'amoled':
-        return 'bg-black text-slate-100';
-      case 'nord':
-        return 'bg-[#242933] text-[#eceff4]';
-      case 'light':
-        return 'bg-[#f4f6f9] text-slate-900';
-      case 'glass':
-        return 'bg-[#080b11] text-slate-100';
-      case 'dark':
-      default:
-        return 'bg-[#090d14] text-slate-100';
-    }
-  };
-
-  const getBackgroundInlineStyle = (): React.CSSProperties => {
-    if (settings.backgroundStyle === 'custom' && settings.customWallpaperUrl) {
-      return {
-        backgroundImage: `url('${settings.customWallpaperUrl}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      };
-    }
-    return {};
+  // Orchestrated deletion: removes folder, resets active view if needed, and moves dials to root
+  const handleDeleteFolder = (folderId: string) => {
+    deleteFolder(folderId, orphanFolderDials);
   };
 
   return (
@@ -272,31 +157,25 @@ export default function App() {
         {/* Top Navbar */}
         <Navbar
           isProductivityMode={settings.productivityMode}
-          onToggleProductivity={() =>
-            setSettings({ ...settings, productivityMode: !settings.productivityMode })
-          }
+          onToggleProductivity={toggleProductivity}
           syncSettings={syncSettings}
           viewDensity={settings.viewDensity || 'station'}
-          onChangeDensity={(density) =>
-            setSettings({ ...settings, viewDensity: density })
-          }
-          onOpenSync={() => setIsSyncOpen(true)}
-          onOpenWidgets={() => setIsWidgetsOpen(true)}
-          onOpenAddDial={() => handleOpenAddDial(activeFolderId)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenImportExport={() => setIsImportExportOpen(true)}
-          isUnlocked={Boolean(masterPassword)}
-          onUnlock={() => setIsUnlockOpen(true)}
-          onLock={() => setMasterPassword('')}
+          onChangeDensity={changeDensity}
+          onOpenSync={openSync}
+          onOpenWidgets={openWidgets}
+          onOpenAddDial={() => openAddDial(activeFolderId)}
+          onOpenSettings={openSettings}
+          onOpenImportExport={openImportExport}
+          isUnlocked={isUnlocked}
+          onUnlock={openUnlock}
+          onLock={lock}
         />
 
         {/* Global Search Bar (Optional based on preferences) */}
         {settings.showSearch && (
           <SearchBar
             currentEngineId={settings.defaultSearchEngine}
-            onEngineChange={(engId) =>
-              setSettings({ ...settings, defaultSearchEngine: engId })
-            }
+            onEngineChange={changeSearchEngine}
           />
         )}
 
@@ -313,12 +192,13 @@ export default function App() {
             isProductivityMode={settings.productivityMode}
             onSelectFolder={(fId) => setActiveFolderId(fId)}
             onSelectTag={(tag) => setActiveTagFilter(tag)}
-            onAddDial={handleOpenAddDial}
-            onAddFolder={() => setIsNewFolderOpen(true)}
-            onEditDial={handleOpenEditDial}
-            onDeleteDial={handleDeleteDial}
-            onToggleSpan={handleToggleSpan}
-            onRecordClick={handleRecordClick}
+            onAddDial={openAddDial}
+            onAddFolder={openNewFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onEditDial={openEditDial}
+            onDeleteDial={deleteDial}
+            onToggleSpan={toggleSpan}
+            onRecordClick={recordClick}
           />
         </main>
 
@@ -337,21 +217,21 @@ export default function App() {
             </div>
             <div className="flex items-center gap-3 font-mono text-[11px]">
               <button
-                onClick={() => setIsImportExportOpen(true)}
+                onClick={openImportExport}
                 className="text-amber-400 hover:text-amber-300 transition-colors"
               >
                 [BUILD EXTENSION .ZIP]
               </button>
               <span className="text-slate-700">|</span>
               <button
-                onClick={() => setIsSyncOpen(true)}
+                onClick={openSync}
                 className="text-slate-400 hover:text-slate-200 transition-colors"
               >
                 SYNC PROTOCOL
               </button>
               <span className="text-slate-700">|</span>
               <button
-                onClick={() => setIsSettingsOpen(true)}
+                onClick={openSettings}
                 className="text-slate-400 hover:text-slate-200 transition-colors"
               >
                 CONFIG
@@ -361,20 +241,20 @@ export default function App() {
         </footer>
       </div>
 
-      {/* --- MODALS --- */}
+      {/* Modals */}
       <UnlockModal
         isOpen={isUnlockOpen}
-        onClose={() => setIsUnlockOpen(false)}
+        onClose={closeUnlock}
         onUnlock={(password) => {
-          setMasterPassword(password);
-          setIsUnlockOpen(false);
+          unlock(password);
+          closeUnlock();
         }}
       />
 
       <EditDialModal
         isOpen={isEditDialOpen}
-        onClose={() => setIsEditDialOpen(false)}
-        onSave={handleSaveDial}
+        onClose={closeEditDial}
+        onSave={saveDial}
         initialDial={editingDial}
         folders={folders}
         defaultFolderId={targetFolderForNewDial}
@@ -382,48 +262,48 @@ export default function App() {
 
       <NewFolderModal
         isOpen={isNewFolderOpen}
-        onClose={() => setIsNewFolderOpen(false)}
-        onSaveFolder={handleSaveFolder}
+        onClose={closeNewFolder}
+        onSaveFolder={saveFolder}
       />
 
       <WidgetsModal
         isOpen={isWidgetsOpen}
-        onClose={() => setIsWidgetsOpen(false)}
+        onClose={closeWidgets}
         notes={notes}
-        onAddNote={handleAddNote}
-        onToggleNote={handleToggleNote}
-        onDeleteNote={handleDeleteNote}
+        onAddNote={addNote}
+        onToggleNote={toggleNote}
+        onDeleteNote={deleteNote}
       />
 
       <SyncModal
         isOpen={isSyncOpen}
-        onClose={() => setIsSyncOpen(false)}
+        onClose={closeSync}
         syncSettings={syncSettings}
         syncCredentials={syncCredentials}
         onUpdateSyncSettings={setSyncSettings}
         onUpdateSyncCredentials={setSyncCredentials}
         currentBackupData={currentBackupData}
-        onRestoreBackupData={handleRestoreBackup}
+        onRestoreBackupData={restoreBackup}
         masterPassword={masterPassword}
-        onRequireUnlock={() => setIsUnlockOpen(true)}
+        onRequireUnlock={openUnlock}
       />
 
       <ImportExportModal
         isOpen={isImportExportOpen}
-        onClose={() => setIsImportExportOpen(false)}
+        onClose={closeImportExport}
         currentBackupData={currentBackupData}
-        onRestoreData={handleRestoreBackup}
-        onAppendDials={handleAppendDials}
+        onRestoreData={restoreBackup}
+        onAppendDials={appendDials}
         masterPassword={masterPassword}
-        onRequireUnlock={() => setIsUnlockOpen(true)}
+        onRequireUnlock={openUnlock}
       />
 
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={closeSettings}
         settings={settings}
         onUpdateSettings={setSettings}
-        onResetDefaults={handleResetDefaults}
+        onResetDefaults={resetDefaults}
       />
     </div>
   );

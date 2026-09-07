@@ -35,8 +35,13 @@ export class WebDAVSyncProvider implements ISyncProvider {
 
   private getAuthHeader(): string {
     if (!this.config.username) return '';
-    const credentials = btoa(`${this.config.username}:${this.password}`);
-    return `Basic ${credentials}`;
+    try {
+      const credentials = btoa(unescape(encodeURIComponent(`${this.config.username}:${this.password}`)));
+      return `Basic ${credentials}`;
+    } catch {
+      const credentials = btoa(`${this.config.username}:${this.password}`);
+      return `Basic ${credentials}`;
+    }
   }
 
   private getFileUrl(): string {
@@ -243,7 +248,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
     try {
       const fileName = this.config.fileName || 'opendial_backup.enc.json';
       const searchRes = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(fileName)}' and trashed=false&fields=files(id,name,modifiedTime)`,
+        `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(fileName)}' and trashed=false&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc`,
         {
           headers: { Authorization: `Bearer ${this.accessToken}` },
         }

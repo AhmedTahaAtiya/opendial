@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Plus, FolderPlus, ArrowLeft, Filter, X, ChevronRight, Hash } from 'lucide-react';
+import { Plus, FolderPlus, ArrowLeft, Filter, X, ChevronRight, Hash, Trash2 } from 'lucide-react';
 import { DialItem, FolderItem } from '../types/opendial';
 import { DialCard } from './DialCard';
 
@@ -16,6 +16,7 @@ interface DialGridProps {
   onSelectTag: (tag: string | null) => void;
   onAddDial: (folderId?: string | null) => void;
   onAddFolder: () => void;
+  onDeleteFolder: (folderId: string) => void;
   onEditDial: (dial: DialItem) => void;
   onDeleteDial: (dialId: string) => void;
   onToggleSpan: (dialId: string) => void;
@@ -35,6 +36,7 @@ export const DialGrid: React.FC<DialGridProps> = ({
   onSelectTag,
   onAddDial,
   onAddFolder,
+  onDeleteFolder,
   onEditDial,
   onDeleteDial,
   onToggleSpan,
@@ -72,10 +74,20 @@ export const DialGrid: React.FC<DialGridProps> = ({
 
   // Hotkey navigation: Pressing '1' through '9' launches the corresponding dial
   useEffect(() => {
+    if (!showKeyShortcuts) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if modifier keys are pressed (e.g. Cmd+1 or Ctrl+1 to switch tabs)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
       // Ignore if typing inside input, textarea or contenteditable
       const activeTag = document.activeElement?.tagName.toLowerCase();
       if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      // Ignore if any modal is active
+      if (document.querySelector('.fixed.z-50, .fixed.z-\\[60\\]')) {
         return;
       }
 
@@ -91,7 +103,7 @@ export const DialGrid: React.FC<DialGridProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [filteredDials, onRecordClick]);
+  }, [filteredDials, onRecordClick, showKeyShortcuts]);
 
   // Folder cards to display when in root view
   const rootFolders = !activeFolderId ? folders : [];
@@ -141,6 +153,16 @@ export const DialGrid: React.FC<DialGridProps> = ({
               <>
                 <ChevronRight className="w-3.5 h-3.5 mx-1 text-slate-600" />
                 <span className="text-white font-bold">{currentFolder.title.toUpperCase()}</span>
+                <button
+                  type="button"
+                  id="btn-delete-active-folder"
+                  onClick={() => onDeleteFolder(currentFolder.id)}
+                  className="ml-3 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-mono font-medium transition-colors cursor-pointer"
+                  title="Delete this folder (dials will be moved to root)"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>DELETE FOLDER</span>
+                </button>
               </>
             )}
           </div>
@@ -207,7 +229,7 @@ export const DialGrid: React.FC<DialGridProps> = ({
               isProductivityMode={isProductivityMode}
               onOpenFolder={(fId) => onSelectFolder(fId)}
               onEdit={() => {}}
-              onDelete={() => {}}
+              onDelete={() => onDeleteFolder(folder.id)}
               onToggleSpan={() => {}}
               onRecordClick={() => {}}
             />

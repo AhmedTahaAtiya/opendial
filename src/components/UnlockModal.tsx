@@ -11,8 +11,16 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({ isOpen, onClose, onUnl
   const [password, setPassword] = useState('');
 
   useEffect(() => {
-    if (!isOpen) setPassword('');
-  }, [isOpen]);
+    if (!isOpen) {
+      setPassword('');
+      return;
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -24,7 +32,12 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({ isOpen, onClose, onUnl
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
+    >
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900 text-slate-100 shadow-2xl"

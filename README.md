@@ -189,7 +189,7 @@ Contributions, feature ideas, and pull requests are welcome!
 
 Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
 
-## Extension build (Phase 2)
+## Extension Build
 
 Run `npm run build:extension`. This performs a production Vite build, copies only compiled app/public assets to `extension-dist/`, and creates `opendial-extension.zip`. Load `extension-dist/` unpacked in a Chromium browser.
 

@@ -108,6 +108,8 @@ export interface RuntimeSyncSettings extends SyncSettings {
   credentials: SyncCredentials;
 }
 
+export type ViewDensity = 'station' | 'compact' | 'editorial';
+
 export interface AppSettings {
   theme: 'dark' | 'light' | 'amoled' | 'nord' | 'glass';
   gridColumns: number; // 4, 5, 6, 7
@@ -120,7 +122,7 @@ export interface AppSettings {
   showWidgets: boolean;
   defaultSearchEngine: string;
   activeTagFilter: string | null;
-  viewDensity?: 'station' | 'compact' | 'editorial';
+  viewDensity?: ViewDensity;
   showKeyShortcuts?: boolean;
 }
 

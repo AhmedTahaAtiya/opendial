@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Download,
@@ -40,6 +40,15 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bookmarkInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -177,7 +186,12 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+    >
       <div
         className="relative w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150 text-slate-100"
         id="import-export-modal-container"
@@ -217,7 +231,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </div>
           )}
 
-          {/* SECTION 1: DOWNLOAD EXTENSION PACKAGE */}
+          {/* Extension package download */}
           <div className="p-4 rounded-xl bg-gradient-to-r from-sky-950/50 to-indigo-950/50 border border-sky-500/30 space-y-3">
             <div className="flex items-center gap-2">
               <Package className="w-4 h-4 text-sky-400" />
@@ -239,7 +253,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </button>
           </div>
 
-          {/* SECTION 2: EXPORT BACKUP */}
+          {/* Export backup */}
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
             <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
               Export OpenDial Vault
@@ -278,7 +292,7 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </button>
           </div>
 
-          {/* SECTION 3: IMPORT BACKUP & BOOKMARKS */}
+          {/* Import backup and bookmarks */}
           <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-3">
             <div className="text-xs font-bold text-slate-200 uppercase tracking-wider">
               Import & Migration
