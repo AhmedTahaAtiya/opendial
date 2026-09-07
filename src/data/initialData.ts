@@ -75,17 +75,19 @@ export const INITIAL_SYNC_SETTINGS: SyncSettings = {
   webdav: {
     url: '',
     username: '',
-    password: '',
     path: '/opendial_backup.enc.json',
+    requiresAuthentication: true,
   },
   gdrive: {
     provider: 'gdrive',
     folderName: 'OpenDial',
     fileName: 'opendial_backup.enc.json',
+    requiresAuthentication: true,
   },
   onedrive: {
     provider: 'onedrive',
     folderName: 'OpenDial',
     fileName: 'opendial_backup.enc.json',
+    requiresAuthentication: true,
   },
 };

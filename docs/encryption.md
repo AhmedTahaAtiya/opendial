@@ -43,12 +43,16 @@ The explicit version and algorithm parameters allow validation and future format
 
 The decoder validates the envelope version, algorithms, numeric parameters, salt/IV lengths, and minimum authenticated-ciphertext length. It derives the key from the supplied password and payload salt, then asks AES-GCM to authenticate and decrypt before parsing JSON. Wrong passwords, modified ciphertext/tag, malformed payloads, unsupported envelopes, and invalid plaintext JSON all produce the same safe message: `Decryption failed. Check the password and backup integrity.` No plaintext fallback occurs.
 
-## Password lifecycle
+## Password and provider credential lifecycle
 
 The master password is entered through the session unlock flow, held only in React memory, cleared on lock/reset/reload, and never logged, written to a backup, local storage, cloud storage, or the payload. Derived keys are non-extractable Web Crypto objects and are not persisted. Losing the password makes encrypted backups unrecoverable.
+
+OAuth access tokens and the WebDAV password are runtime, local-only credentials. They are stored under a dedicated local storage key, separate from portable sync configuration. Browser local storage is **not a secure credential vault**: same-origin script or a compromised browser profile can read it. The separation prevents accidental serialization into normal application data, plaintext exports, extension seeds, and encrypted cloud-backup plaintext; it does not protect a compromised runtime.
+
+Portable sync configuration includes provider choice, WebDAV URL/username/path, cloud folder/file names, and schedule metadata. Backup schema 2.0.0 never contains provider credentials. Every import path allowlists portable fields, discards credential-shaped legacy fields, marks all cloud providers as requiring authentication, and clears existing local provider credentials. Users must re-enter credentials after every restore; sync resumes normally afterward.
 
 ## Threat model and limitations
 
 This protects backup confidentiality and integrity against a curious or compromised storage provider, stolen cloud files, and undetected ciphertext modification. Random salt prevents identical passwords from yielding the same derived key across operations; random IV prevents deterministic AES-GCM output.
 
-It does not protect an unlocked browser session, a compromised device/browser/extension, malicious code running in the origin, screen/key logging, weak-password offline guessing, traffic metadata (provider, timing, file size), cloud credentials stored by existing sync settings, denial of service, rollback to an older valid encrypted backup, or loss of the password. PBKDF2 iteration cost is encoded for migration but is not memory-hard. TLS remains required to protect cloud credentials and transport metadata.
+It does not protect an unlocked browser session, a compromised device/browser/extension, malicious code running in the origin, screen/key logging, weak-password offline guessing, traffic metadata (provider, timing, file size), local-only credentials readable by same-origin code, denial of service, rollback to an older valid encrypted backup, or loss of the password. PBKDF2 iteration cost is encoded for migration but is not memory-hard. TLS remains required to protect cloud credentials and transport metadata.

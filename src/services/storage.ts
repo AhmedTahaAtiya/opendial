@@ -2,7 +2,14 @@
  * Storage Layer:
  * - IndexedDB for high-res thumbnails & offline blobs
  * - LocalStorage for fast synchronous UI state & configuration
+ *
+ * Provider credentials use a dedicated local-only key. localStorage is not a secure vault:
+ * same-origin script can read it. This separation only prevents credentials from entering
+ * normal persistence, exports, extension seeds, and cloud backup plaintext.
  */
+
+import { SyncCredentials, SyncSettings } from '../types/opendial';
+import { sanitizeSyncSettings } from './backup';
 
 const DB_NAME = 'opendial_db';
 const DB_VERSION = 1;
@@ -87,6 +94,33 @@ export function saveToLocal<T>(key: string, value: T): void {
   } catch (e) {
     console.error(`Failed to save to local storage for key ${key}`, e);
   }
+}
+
+const CREDENTIALS_KEY = 'opendial_sync_credentials_local_only';
+const EMPTY_CREDENTIALS: SyncCredentials = {
+  webdavPassword: '',
+  googleAccessToken: '',
+  oneDriveAccessToken: '',
+};
+
+export function loadSyncSettings(defaultValue: SyncSettings): SyncSettings {
+  const legacy = loadFromLocal<unknown>('sync', defaultValue);
+  const sanitized = sanitizeSyncSettings(legacy as Parameters<typeof sanitizeSyncSettings>[0]);
+  saveToLocal('sync', sanitized);
+  return sanitized;
+}
+
+export function loadSyncCredentials(): SyncCredentials {
+  const stored = loadFromLocal<Partial<SyncCredentials>>('sync_credentials_local_only', {});
+  return { ...EMPTY_CREDENTIALS, ...stored };
+}
+
+export function saveSyncCredentials(credentials: SyncCredentials): void {
+  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+}
+
+export function clearSyncCredentials(): void {
+  localStorage.removeItem(CREDENTIALS_KEY);
 }
 
 export function clearAllStorage(): void {

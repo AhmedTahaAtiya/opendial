@@ -10,6 +10,7 @@ import {
   NoteItem,
   AppSettings,
   SyncSettings,
+  SyncCredentials,
   ExportBackupData,
 } from './types/opendial';
 import {
@@ -19,7 +20,16 @@ import {
   INITIAL_SETTINGS,
   INITIAL_SYNC_SETTINGS,
 } from './data/initialData';
-import { loadFromLocal, saveToLocal, clearAllStorage } from './services/storage';
+import {
+  loadFromLocal,
+  saveToLocal,
+  clearAllStorage,
+  loadSyncSettings,
+  loadSyncCredentials,
+  saveSyncCredentials,
+  clearSyncCredentials,
+} from './services/storage';
+import { createPortableBackup, sanitizeImportedBackup, sanitizeSyncSettings } from './services/backup';
 import { Navbar } from './components/Navbar';
 import { SearchBar } from './components/SearchBar';
 import { DialGrid } from './components/DialGrid';
@@ -46,7 +56,10 @@ export default function App() {
     loadFromLocal<AppSettings>('settings', INITIAL_SETTINGS)
   );
   const [syncSettings, setSyncSettings] = useState<SyncSettings>(() =>
-    loadFromLocal<SyncSettings>('sync', INITIAL_SYNC_SETTINGS)
+    loadSyncSettings(INITIAL_SYNC_SETTINGS)
+  );
+  const [syncCredentials, setSyncCredentials] = useState<SyncCredentials>(() =>
+    loadSyncCredentials()
   );
   // The master password is deliberately session-only and is never persisted.
   const [masterPassword, setMasterPassword] = useState('');
@@ -90,21 +103,21 @@ export default function App() {
   }, [settings]);
 
   useEffect(() => {
-    saveToLocal('sync', syncSettings);
+    saveToLocal('sync', sanitizeSyncSettings(syncSettings));
   }, [syncSettings]);
 
-  // Current backup state payload
-  const currentBackupData: ExportBackupData = {
-    version: '1.0.0',
-    timestamp: Date.now(),
-    appName: 'OpenDial',
-    isEncrypted: false,
+  useEffect(() => {
+    saveSyncCredentials(syncCredentials);
+  }, [syncCredentials]);
+
+  // Current portable backup state payload (credentials are structurally excluded).
+  const currentBackupData: ExportBackupData = createPortableBackup({
     dials,
     folders,
     notes,
     settings,
     syncSettings,
-  };
+  });
 
   // --- DIAL HANDLERS ---
   const handleSaveDial = (dial: DialItem) => {
@@ -182,11 +195,14 @@ export default function App() {
 
   // --- RESTORE DATA ---
   const handleRestoreBackup = (data: ExportBackupData) => {
-    if (data.dials) setDials(data.dials);
-    if (data.folders) setFolders(data.folders);
-    if (data.notes) setNotes(data.notes);
-    if (data.settings) setSettings(data.settings);
-    if (data.syncSettings) setSyncSettings(data.syncSettings);
+    const restored = sanitizeImportedBackup(data);
+    setDials(restored.dials);
+    setFolders(restored.folders);
+    setNotes(restored.notes);
+    if (restored.settings) setSettings(restored.settings);
+    setSyncSettings(restored.syncSettings);
+    setSyncCredentials({ webdavPassword: '', googleAccessToken: '', oneDriveAccessToken: '' });
+    clearSyncCredentials();
   };
 
   const handleAppendDials = (imported: DialItem[]) => {
@@ -200,6 +216,7 @@ export default function App() {
     setNotes(INITIAL_NOTES);
     setSettings(INITIAL_SETTINGS);
     setSyncSettings(INITIAL_SYNC_SETTINGS);
+    setSyncCredentials({ webdavPassword: '', googleAccessToken: '', oneDriveAccessToken: '' });
     setMasterPassword('');
     setActiveFolderId(null);
     setActiveTagFilter(null);
@@ -382,7 +399,9 @@ export default function App() {
         isOpen={isSyncOpen}
         onClose={() => setIsSyncOpen(false)}
         syncSettings={syncSettings}
+        syncCredentials={syncCredentials}
         onUpdateSyncSettings={setSyncSettings}
+        onUpdateSyncCredentials={setSyncCredentials}
         currentBackupData={currentBackupData}
         onRestoreBackupData={handleRestoreBackup}
         masterPassword={masterPassword}

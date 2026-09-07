@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test:crypto": "tsx --test src/services/crypto.test.ts"
+    "test:crypto": "tsx --test src/services/crypto.test.ts",
+    "test:backup": "tsx --test src/services/backup.test.ts",
+    "test": "tsx --test src/services/*.test.ts"
   },
   "dependencies": {
     "jszip": "^3.10.1",

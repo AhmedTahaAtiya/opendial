@@ -4,8 +4,9 @@
  * Google Drive, OneDrive, or local encrypted file vaults.
  */
 
-import { SyncSettings, ExportBackupData } from '../types/opendial';
+import { RuntimeSyncSettings, ExportBackupData, SyncSettings } from '../types/opendial';
 import { encryptData, decryptData } from './crypto';
+import { sanitizeImportedBackup } from './backup';
 
 export interface SyncResult {
   success: boolean;
@@ -27,11 +28,14 @@ export interface ISyncProvider {
 export class WebDAVSyncProvider implements ISyncProvider {
   name = 'WebDAV (Nextcloud / Self-Hosted)';
 
-  constructor(private config: SyncSettings['webdav']) {}
+  constructor(
+    private config: SyncSettings['webdav'],
+    private password: string
+  ) {}
 
   private getAuthHeader(): string {
     if (!this.config.username) return '';
-    const credentials = btoa(`${this.config.username}:${this.config.password || ''}`);
+    const credentials = btoa(`${this.config.username}:${this.password}`);
     return `Basic ${credentials}`;
   }
 
@@ -74,7 +78,7 @@ export class WebDAVSyncProvider implements ISyncProvider {
       if (!password) {
         return { success: false, message: 'Master password required for encrypted cloud upload.' };
       }
-      const encrypted = await encryptData(data, password);
+      const encrypted = await encryptData(sanitizeImportedBackup(data), password);
       const body = JSON.stringify(encrypted);
 
       const response = await fetch(this.getFileUrl(), {
@@ -132,7 +136,7 @@ export class WebDAVSyncProvider implements ISyncProvider {
         success: true,
         message: 'Downloaded and decrypted backup successfully',
         timestamp: decrypted.timestamp,
-        remoteData: decrypted,
+        remoteData: sanitizeImportedBackup(decrypted),
       };
     } catch (e) {
       const err = e as Error;
@@ -151,15 +155,18 @@ export class WebDAVSyncProvider implements ISyncProvider {
 export class GoogleDriveSyncProvider implements ISyncProvider {
   name = 'Google Drive';
 
-  constructor(private config: SyncSettings['gdrive']) {}
+  constructor(
+    private config: SyncSettings['gdrive'],
+    private accessToken: string
+  ) {}
 
   async testConnection(): Promise<{ ok: boolean; message: string }> {
-    if (!this.config.accessToken) {
+    if (!this.accessToken) {
       return { ok: false, message: 'Google OAuth Access Token is required' };
     }
     try {
       const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
-        headers: { Authorization: `Bearer ${this.config.accessToken}` },
+        headers: { Authorization: `Bearer ${this.accessToken}` },
       });
       if (res.ok) {
         const info = await res.json();
@@ -172,7 +179,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
   }
 
   async upload(data: ExportBackupData, password?: string): Promise<SyncResult> {
-    if (!this.config.accessToken) {
+    if (!this.accessToken) {
       return { success: false, message: 'Google Drive token required' };
     }
 
@@ -180,7 +187,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
       if (!password) {
         return { success: false, message: 'Master password required for encrypted cloud upload.' };
       }
-      const encrypted = await encryptData(data, password);
+      const encrypted = await encryptData(sanitizeImportedBackup(data), password);
       const content = JSON.stringify(encrypted);
 
       // Upload file multipart to Drive
@@ -208,7 +215,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${this.config.accessToken}`,
+            Authorization: `Bearer ${this.accessToken}`,
             'Content-Type': `multipart/related; boundary=${boundary}`,
           },
           body: multipartRequestBody,
@@ -230,7 +237,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
   }
 
   async download(password?: string): Promise<SyncResult> {
-    if (!this.config.accessToken) {
+    if (!this.accessToken) {
       return { success: false, message: 'Google Drive token required' };
     }
     try {
@@ -238,7 +245,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
       const searchRes = await fetch(
         `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(fileName)}' and trashed=false&fields=files(id,name,modifiedTime)`,
         {
-          headers: { Authorization: `Bearer ${this.config.accessToken}` },
+          headers: { Authorization: `Bearer ${this.accessToken}` },
         }
       );
       if (!searchRes.ok) throw new Error(`Drive search error ${searchRes.status}`);
@@ -249,7 +256,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
 
       const fileId = searchData.files[0].id;
       const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-        headers: { Authorization: `Bearer ${this.config.accessToken}` },
+        headers: { Authorization: `Bearer ${this.accessToken}` },
       });
 
       if (!fileRes.ok) throw new Error(`Drive download error ${fileRes.status}`);
@@ -266,7 +273,7 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
         success: true,
         message: 'Downloaded & decrypted backup from Google Drive',
         timestamp: decrypted.timestamp,
-        remoteData: decrypted,
+        remoteData: sanitizeImportedBackup(decrypted),
       };
     } catch (e) {
       return { success: false, message: `Google Drive download error: ${(e as Error).message}` };
@@ -281,15 +288,18 @@ export class GoogleDriveSyncProvider implements ISyncProvider {
 export class OneDriveSyncProvider implements ISyncProvider {
   name = 'Microsoft OneDrive';
 
-  constructor(private config: SyncSettings['onedrive']) {}
+  constructor(
+    private config: SyncSettings['onedrive'],
+    private accessToken: string
+  ) {}
 
   async testConnection(): Promise<{ ok: boolean; message: string }> {
-    if (!this.config.accessToken) {
+    if (!this.accessToken) {
       return { ok: false, message: 'OneDrive OAuth Access Token is required' };
     }
     try {
       const res = await fetch('https://graph.microsoft.com/v1.0/me', {
-        headers: { Authorization: `Bearer ${this.config.accessToken}` },
+        headers: { Authorization: `Bearer ${this.accessToken}` },
       });
       if (res.ok) {
         const user = await res.json();
@@ -302,14 +312,14 @@ export class OneDriveSyncProvider implements ISyncProvider {
   }
 
   async upload(data: ExportBackupData, password?: string): Promise<SyncResult> {
-    if (!this.config.accessToken) {
+    if (!this.accessToken) {
       return { success: false, message: 'OneDrive token required' };
     }
     try {
       if (!password) {
         return { success: false, message: 'Master password required for encrypted cloud upload.' };
       }
-      const encrypted = await encryptData(data, password);
+      const encrypted = await encryptData(sanitizeImportedBackup(data), password);
       const content = JSON.stringify(encrypted);
 
       const fileName = this.config.fileName || 'opendial_backup.enc.json';
@@ -318,7 +328,7 @@ export class OneDriveSyncProvider implements ISyncProvider {
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${this.config.accessToken}`,
+            Authorization: `Bearer ${this.accessToken}`,
             'Content-Type': 'application/json',
           },
           body: content,
@@ -340,7 +350,7 @@ export class OneDriveSyncProvider implements ISyncProvider {
   }
 
   async download(password?: string): Promise<SyncResult> {
-    if (!this.config.accessToken) {
+    if (!this.accessToken) {
       return { success: false, message: 'OneDrive token required' };
     }
     try {
@@ -348,7 +358,7 @@ export class OneDriveSyncProvider implements ISyncProvider {
       const fileRes = await fetch(
         `https://graph.microsoft.com/v1.0/me/drive/root:/Apps/OpenDial/${fileName}:/content`,
         {
-          headers: { Authorization: `Bearer ${this.config.accessToken}` },
+          headers: { Authorization: `Bearer ${this.accessToken}` },
         }
       );
 
@@ -369,7 +379,7 @@ export class OneDriveSyncProvider implements ISyncProvider {
         success: true,
         message: 'Restored backup from OneDrive successfully',
         timestamp: decrypted.timestamp,
-        remoteData: decrypted,
+        remoteData: sanitizeImportedBackup(decrypted),
       };
     } catch (e) {
       return { success: false, message: `OneDrive download error: ${(e as Error).message}` };
@@ -393,11 +403,11 @@ export class LocalFileSyncProvider implements ISyncProvider {
       let content: string;
       let filename = `opendial-backup-${new Date().toISOString().slice(0, 10)}.json`;
       if (password) {
-        const encrypted = await encryptData(data, password);
+        const encrypted = await encryptData(sanitizeImportedBackup(data), password);
         content = JSON.stringify(encrypted, null, 2);
         filename = `opendial-e2ee-vault-${new Date().toISOString().slice(0, 10)}.opendial`;
       } else {
-        content = JSON.stringify(data, null, 2);
+        content = JSON.stringify(sanitizeImportedBackup(data), null, 2);
       }
 
       const blob = new Blob([content], { type: 'application/json' });
@@ -431,14 +441,14 @@ export class LocalFileSyncProvider implements ISyncProvider {
 /**
  * Sync Manager factory
  */
-export function createSyncProvider(settings: SyncSettings): ISyncProvider {
+export function createSyncProvider(settings: RuntimeSyncSettings): ISyncProvider {
   switch (settings.provider) {
     case 'webdav':
-      return new WebDAVSyncProvider(settings.webdav);
+      return new WebDAVSyncProvider(settings.webdav, settings.credentials.webdavPassword);
     case 'gdrive':
-      return new GoogleDriveSyncProvider(settings.gdrive);
+      return new GoogleDriveSyncProvider(settings.gdrive, settings.credentials.googleAccessToken);
     case 'onedrive':
-      return new OneDriveSyncProvider(settings.onedrive);
+      return new OneDriveSyncProvider(settings.onedrive, settings.credentials.oneDriveAccessToken);
     case 'local':
     default:
       return new LocalFileSyncProvider();

@@ -61,23 +61,30 @@ export interface NoteItem {
   createdAt: number;
 }
 
+export interface RecentTabItem {
+  id: string;
+  title: string;
+  url: string;
+}
+
 export type SyncProviderType = 'local' | 'webdav' | 'gdrive' | 'onedrive';
 
 export interface WebDAVConfig {
   url: string;
   username: string;
-  password?: string;
   path: string;
+  requiresAuthentication: boolean;
 }
 
 export interface CloudDriveConfig {
   provider: 'gdrive' | 'onedrive';
-  accessToken?: string;
   folderName: string;
   fileName: string;
   lastSyncedAt?: number;
+  requiresAuthentication: boolean;
 }
 
+/** Portable sync configuration. Provider secrets must never be added here. */
 export interface SyncSettings {
   enabled: boolean;
   provider: SyncProviderType;
@@ -88,6 +95,17 @@ export interface SyncSettings {
   webdav: WebDAVConfig;
   gdrive: CloudDriveConfig;
   onedrive: CloudDriveConfig;
+}
+
+/** Local-only provider credentials, stored separately from portable application data. */
+export interface SyncCredentials {
+  webdavPassword: string;
+  googleAccessToken: string;
+  oneDriveAccessToken: string;
+}
+
+export interface RuntimeSyncSettings extends SyncSettings {
+  credentials: SyncCredentials;
 }
 
 export interface AppSettings {

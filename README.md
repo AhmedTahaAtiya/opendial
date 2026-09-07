@@ -31,6 +31,7 @@ All dials, folders, notes, and preferences can be synced directly to your own pe
 - **AES-GCM 256-bit Encryption**: Client-side authenticated encryption using Web Crypto with a fresh 96-bit IV per operation.
 - **PBKDF2 Key Derivation**: Passphrases use a fresh 128-bit salt and 100,000 rounds of PBKDF2-SHA256 per operation.
 - **Mandatory Cloud E2EE**: WebDAV, Google Drive, and OneDrive never receive plaintext backups; plaintext cloud downloads are rejected.
+- **Non-portable credentials**: OAuth tokens and WebDAV passwords are separated from portable settings, omitted from exports/cloud plaintext/extension seeds, and cleared on restore so providers require re-authentication.
 - **BYOS (Bring Your Own Storage)**: Direct synchronization with personal storage without intermediate proxy servers.
 - **Design details**: See [`docs/encryption.md`](docs/encryption.md) for payload format, workflows, password lifecycle, threat model, and limitations.
 

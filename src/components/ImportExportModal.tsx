@@ -13,6 +13,7 @@ import {
 import { ExportBackupData, DialItem } from '../types/opendial';
 import { encryptData, decryptData } from '../services/crypto';
 import { generateExtensionZip } from '../services/extensionExporter';
+import { sanitizeImportedBackup } from '../services/backup';
 
 interface ImportExportModalProps {
   isOpen: boolean;
@@ -97,11 +98,11 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
           return;
         }
         const decrypted = await decryptData<ExportBackupData>(parsed, masterPassword);
-        onRestoreData(decrypted);
+        onRestoreData(sanitizeImportedBackup(decrypted));
         setStatusMessage({ type: 'success', text: 'Encrypted backup decrypted and restored!' });
       } else if (parsed.dials && Array.isArray(parsed.dials)) {
-        onRestoreData(parsed);
-        setStatusMessage({ type: 'success', text: `Restored ${parsed.dials.length} speed dials!` });
+        onRestoreData(sanitizeImportedBackup(parsed));
+        setStatusMessage({ type: 'success', text: `Restored ${parsed.dials.length} speed dials; cloud credentials were cleared.` });
       } else {
         setStatusMessage({ type: 'error', text: 'Unrecognized backup file format.' });
       }

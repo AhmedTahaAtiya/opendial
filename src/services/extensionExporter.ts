@@ -5,6 +5,7 @@
 
 import JSZip from 'jszip';
 import { ExportBackupData } from '../types/opendial';
+import { sanitizeImportedBackup } from './backup';
 
 export async function generateExtensionZip(backupData: ExportBackupData): Promise<Blob> {
   const zip = new JSZip();
@@ -151,7 +152,7 @@ chrome.action.onClicked.addListener(() => {
   zip.file('background.js', backgroundJs);
   zip.file('newtab.html', newtabHtml);
   zip.file('icon.svg', iconSvg);
-  zip.file('config_seed.json', JSON.stringify(backupData, null, 2));
+  zip.file('config_seed.json', JSON.stringify(sanitizeImportedBackup(backupData), null, 2));
 
   return await zip.generateAsync({ type: 'blob' });
 }

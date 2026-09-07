@@ -13,7 +13,7 @@ import {
   UploadCloud,
   DownloadCloud,
 } from 'lucide-react';
-import { SyncSettings, SyncProviderType, ExportBackupData } from '../types/opendial';
+import { SyncSettings, SyncCredentials, SyncProviderType, ExportBackupData, RuntimeSyncSettings } from '../types/opendial';
 import { createSyncProvider, SyncResult } from '../services/sync';
 import { checkPasswordStrength } from '../services/crypto';
 
@@ -21,7 +21,9 @@ interface SyncModalProps {
   isOpen: boolean;
   onClose: () => void;
   syncSettings: SyncSettings;
+  syncCredentials: SyncCredentials;
   onUpdateSyncSettings: (settings: SyncSettings) => void;
+  onUpdateSyncCredentials: (credentials: SyncCredentials) => void;
   currentBackupData: ExportBackupData;
   onRestoreBackupData: (data: ExportBackupData) => void;
   masterPassword: string;
@@ -32,7 +34,9 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   isOpen,
   onClose,
   syncSettings,
+  syncCredentials,
   onUpdateSyncSettings,
+  onUpdateSyncCredentials,
   currentBackupData,
   onRestoreBackupData,
   masterPassword,
@@ -43,12 +47,12 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   // WebDAV fields
   const [webdavUrl, setWebdavUrl] = useState(syncSettings.webdav.url);
   const [webdavUser, setWebdavUser] = useState(syncSettings.webdav.username);
-  const [webdavPass, setWebdavPass] = useState(syncSettings.webdav.password || '');
+  const [webdavPass, setWebdavPass] = useState(syncCredentials.webdavPassword);
   const [webdavPath, setWebdavPath] = useState(syncSettings.webdav.path);
 
   // Cloud Drive tokens
-  const [gdriveToken, setGdriveToken] = useState(syncSettings.gdrive.accessToken || '');
-  const [onedriveToken, setOnedriveToken] = useState(syncSettings.onedrive.accessToken || '');
+  const [gdriveToken, setGdriveToken] = useState(syncCredentials.googleAccessToken);
+  const [onedriveToken, setOnedriveToken] = useState(syncCredentials.oneDriveAccessToken);
 
   // Status & testing
   const [isTesting, setIsTesting] = useState(false);
@@ -60,27 +64,37 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
   const passwordStrength = checkPasswordStrength(masterPassword);
 
-  const getCurrentConfig = (): SyncSettings => {
+  const getCurrentConfig = (): RuntimeSyncSettings => {
     return {
       ...syncSettings,
       provider,
-      // Always overwrite legacy persisted false values; cloud E2EE is not optional.
       e2eeEnabled: true,
       webdav: {
         url: webdavUrl,
         username: webdavUser,
-        password: webdavPass,
         path: webdavPath || '/opendial_backup.enc.json',
+        requiresAuthentication: !webdavPass,
       },
       gdrive: {
         ...syncSettings.gdrive,
-        accessToken: gdriveToken,
+        requiresAuthentication: !gdriveToken,
       },
       onedrive: {
         ...syncSettings.onedrive,
-        accessToken: onedriveToken,
+        requiresAuthentication: !onedriveToken,
+      },
+      credentials: {
+        webdavPassword: webdavPass,
+        googleAccessToken: gdriveToken,
+        oneDriveAccessToken: onedriveToken,
       },
     };
+  };
+
+  const saveRuntimeConfig = (config: RuntimeSyncSettings) => {
+    const { credentials, ...portable } = config;
+    onUpdateSyncCredentials(credentials);
+    onUpdateSyncSettings(portable);
   };
 
   const handleTestConnection = async () => {
@@ -108,13 +122,13 @@ export const SyncModal: React.FC<SyncModalProps> = ({
     setSyncStatus(null);
     try {
       const config = getCurrentConfig();
-      onUpdateSyncSettings(config);
+      saveRuntimeConfig(config);
 
       const syncEngine = createSyncProvider(config);
       const res = await syncEngine.upload(currentBackupData, masterPassword || undefined);
       setSyncStatus(res);
       if (res.success) {
-        onUpdateSyncSettings({
+        saveRuntimeConfig({
           ...config,
           lastSyncTimestamp: res.timestamp || Date.now(),
         });
@@ -152,7 +166,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
   const handleSaveSettings = () => {
     const config = getCurrentConfig();
-    onUpdateSyncSettings(config);
+    saveRuntimeConfig(config);
     onClose();
   };
 
