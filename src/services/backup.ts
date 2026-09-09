@@ -79,13 +79,34 @@ function nullableString(value: unknown, path: string): string | null | undefined
   return stringAt(value, path);
 }
 
+const DATA_URL_PATTERN = /^data:(image\/[^;]+);base64,[A-Za-z0-9+/=]+$/;
+const SAFE_URL_PROTOCOLS = ['http:', 'https:'];
+
+function isValidUrl(value: string): boolean {
+  try {
+    const url = new URL(value, 'https://example.com');
+    return SAFE_URL_PROTOCOLS.includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function isValidDataUrl(value: string): boolean {
+  return DATA_URL_PATTERN.test(value);
+}
+
+function validateDialUrl(value: string, path: string): string {
+  if (!isValidUrl(value)) invalid(path, 'must be a valid HTTP/HTTPS URL');
+  return value;
+}
+
 function validateMultiLink(value: unknown, path: string): MultiPageLink {
   const item = objectAt(value, path);
   allowedKeys(item, path, ['id', 'title', 'url', 'icon']);
   return {
     id: stringAt(item.id, `${path}.id`),
     title: stringAt(item.title, `${path}.title`),
-    url: stringAt(item.url, `${path}.url`),
+    url: validateDialUrl(stringAt(item.url, `${path}.url`), `${path}.url`),
     ...(item.icon === undefined ? {} : { icon: stringAt(item.icon, `${path}.icon`) }),
   };
 }
@@ -103,10 +124,13 @@ function validateDial(value: unknown, path: string): DialItem {
   const tags = item.tags as unknown[] | undefined;
   const multiLinks = item.multiLinks as unknown[] | undefined;
 
+  const url = stringAt(item.url, `${path}.url`);
+  validateDialUrl(url, `${path}.url`);
+
   return {
     id: stringAt(item.id, `${path}.id`),
     title: stringAt(item.title, `${path}.title`),
-    url: stringAt(item.url, `${path}.url`),
+    url,
     type: enumAt(item.type, `${path}.type`, ['standard', 'live', 'multipage', 'weather', 'folder']),
     createdAt: numberAt(item.createdAt, `${path}.createdAt`, 0),
     ...(item.folderId === undefined ? {} : { folderId: nullableString(item.folderId, `${path}.folderId`) }),
