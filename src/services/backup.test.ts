@@ -144,3 +144,51 @@ test('cloud plaintext is sanitized before encryption for every provider', async 
     globalThis.fetch = originalFetch;
   }
 });
+
+test('rejects dial URL with invalid protocol (javascript:)', () => {
+  const base = legacyBackup();
+  assert.throws(
+    () => sanitizeImportedBackup({ ...base, dials: [{ id: 'd1', title: 'Dial', url: 'javascript:alert(1)', type: 'standard', createdAt: 1 }] }),
+    /dials\[0\]\.url must be a valid HTTP\/HTTPS URL/
+  );
+});
+
+test('rejects dial URL with invalid protocol (data:) when not image', () => {
+  const base = legacyBackup();
+  assert.throws(
+    () => sanitizeImportedBackup({ ...base, dials: [{ id: 'd1', title: 'Dial', url: 'data:text/html,<script>alert(1)</script>', type: 'standard', createdAt: 1 }] }),
+    /dials\[0\]\.url must be a valid HTTP\/HTTPS URL/
+  );
+});
+
+test('accepts valid HTTPS URL for dial', () => {
+  const base = legacyBackup();
+  const restored = sanitizeImportedBackup({
+    ...base,
+    dials: [{ id: 'd1', title: 'Test', url: 'https://example.com/page', type: 'standard', createdAt: 1 }],
+  });
+  assert.equal(restored.dials[0].url, 'https://example.com/page');
+});
+
+test('rejects multi-link URL with invalid protocol', () => {
+  const base = legacyBackup();
+  assert.throws(
+    () => sanitizeImportedBackup({ ...base, dials: [{ 
+      id: 'd1', title: 'Dial', url: 'https://example.com', type: 'multipage', createdAt: 1,
+      multiLinks: [{ id: 'l1', title: 'Link', url: 'ftp://evil.com' }]
+    }] }),
+    /dials\[0\]\.multiLinks\[0\]\.url must be a valid HTTP\/HTTPS URL/
+  );
+});
+
+test('accepts valid multi-link URLs', () => {
+  const base = legacyBackup();
+  const restored = sanitizeImportedBackup({
+    ...base,
+    dials: [{ 
+      id: 'd1', title: 'Dial', url: 'https://example.com', type: 'multipage', createdAt: 1,
+      multiLinks: [{ id: 'l1', title: 'Link', url: 'https://example.com/link' }]
+    }],
+  });
+  assert.equal(restored.dials[0].multiLinks![0].url, 'https://example.com/link');
+});
