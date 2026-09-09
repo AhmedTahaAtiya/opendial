@@ -404,36 +404,33 @@ export class LocalFileSyncProvider implements ISyncProvider {
   }
 
   async upload(data: ExportBackupData, password?: string): Promise<SyncResult> {
-    try {
-      let content: string;
-      let filename = `opendial-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      if (password) {
+      try {
+        if (!password) {
+          return { success: false, message: 'Master password required for encrypted local vault.' };
+        }
         const encrypted = await encryptData(sanitizeImportedBackup(data), password);
-        content = JSON.stringify(encrypted, null, 2);
-        filename = `opendial-e2ee-vault-${new Date().toISOString().slice(0, 10)}.opendial`;
-      } else {
-        content = JSON.stringify(sanitizeImportedBackup(data), null, 2);
+        const content = JSON.stringify(encrypted, null, 2);
+        const filename = `opendial-e2ee-vault-${new Date().toISOString().slice(0, 10)}.opendial`;
+
+        const blob = new Blob([content], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        return {
+          success: true,
+          message: `Saved encrypted vault: ${filename}`,
+          timestamp: Date.now(),
+        };
+      } catch (e) {
+        return { success: false, message: `Export failed: ${(e as Error).message}` };
       }
-
-      const blob = new Blob([content], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      return {
-        success: true,
-        message: `Saved backup file: ${filename}`,
-        timestamp: Date.now(),
-      };
-    } catch (e) {
-      return { success: false, message: `Export failed: ${(e as Error).message}` };
     }
-  }
 
   async download(): Promise<SyncResult> {
     return {
