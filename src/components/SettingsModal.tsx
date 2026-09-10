@@ -202,7 +202,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </label>
             <select
               value={settings.defaultSearchEngine}
-              onChange={(e) => onUpdateSettings({ ...settings, defaultSearchEngine: e.target.value })}
+              onChange={(e) =>
+                onUpdateSettings({ ...settings, defaultSearchEngine: e.target.value })
+              }
               className="w-full px-3 py-2 rounded-xl bg-[#141a24] border border-[#222a3a] text-slate-100 text-xs font-mono focus:outline-none focus:border-amber-500"
             >
               {DEFAULT_SEARCH_ENGINES.map((eng) => (
@@ -227,7 +229,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <input
                 type="checkbox"
                 checked={settings.showKeyShortcuts !== false}
-                onChange={(e) => onUpdateSettings({ ...settings, showKeyShortcuts: e.target.checked })}
+                onChange={(e) =>
+                  onUpdateSettings({ ...settings, showKeyShortcuts: e.target.checked })
+                }
                 className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-[#0e121a] border-[#2b3548]"
               />
             </label>
@@ -280,4 +284,3 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     </div>
   );
 };
-

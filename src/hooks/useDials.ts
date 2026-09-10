@@ -5,7 +5,7 @@ import { loadFromLocal, saveToLocal } from '../services/storage';
 
 export function useDials() {
   const [dials, setDials] = useState<DialItem[]>(() =>
-    loadFromLocal<DialItem[]>('dials', INITIAL_DIALS)
+    loadFromLocal<DialItem[]>('dials', INITIAL_DIALS),
   );
 
   // Synchronize dials to local storage
@@ -32,15 +32,13 @@ export function useDials() {
           return { ...d, colSpan: newSpan as 1 | 2 };
         }
         return d;
-      })
+      }),
     );
   }, []);
 
   const recordClick = useCallback((dialId: string) => {
     setDials((prev) =>
-      prev.map((d) =>
-        d.id === dialId ? { ...d, clicksCount: (d.clicksCount || 0) + 1 } : d
-      )
+      prev.map((d) => (d.id === dialId ? { ...d, clicksCount: (d.clicksCount || 0) + 1 } : d)),
     );
   }, []);
 
@@ -49,9 +47,7 @@ export function useDials() {
   }, []);
 
   const orphanFolderDials = useCallback((folderId: string) => {
-    setDials((prev) =>
-      prev.map((d) => (d.folderId === folderId ? { ...d, folderId: null } : d))
-    );
+    setDials((prev) => prev.map((d) => (d.folderId === folderId ? { ...d, folderId: null } : d)));
   }, []);
 
   const resetDials = useCallback(() => {

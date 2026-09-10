@@ -9,11 +9,19 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
+    "lint:fix": "tsc --noEmit && eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test:crypto": "tsx --test src/services/crypto.test.ts",
     "test:backup": "tsx --test src/services/backup.test.ts",
-    "test": "tsx --test src/services/*.test.ts",
-    "build:extension": "node scripts/build-extension.mjs",
-    "test:extension": "npm run build:extension && tsx --test tests/extension.test.ts"
+    "test:migrations": "tsx --test src/services/migrations.test.ts",
+    "test:types": "tsx --test src/types/opendial.test.ts",
+    "test": "tsx --test src/services/*.test.ts src/types/*.test.ts",
+    "test:extension": "npm run build:extension && tsx --test tests/extension.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "tsc --noEmit && eslint . && prettier --check . && tsx --test src/services/*.test.ts src/types/*.test.ts && npm run test:extension && npm run test:e2e",
+    "build:extension": "node scripts/build-extension.mjs"
   },
   "dependencies": {
     "jszip": "^3.10.1",
@@ -23,6 +31,8 @@
     "react-dom": "^19.0.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/jszip": "^3.4.1",
     "@types/node": "^22.14.0",
@@ -30,9 +40,13 @@
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.3",
     "esbuild": "^0.25.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
+    "typescript-eslint": "^8.70.0",
     "vite": "^6.2.3"
   }
 }

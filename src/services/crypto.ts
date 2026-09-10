@@ -26,14 +26,14 @@ function base64ToBytes(base64: string): Uint8Array {
 async function deriveKey(
   password: string,
   salt: Uint8Array,
-  iterations: number
+  iterations: number,
 ): Promise<CryptoKey> {
   const passwordKey = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(password),
     'PBKDF2',
     false,
-    ['deriveKey']
+    ['deriveKey'],
   );
 
   return crypto.subtle.deriveKey(
@@ -41,7 +41,7 @@ async function deriveKey(
     passwordKey,
     { name: 'AES-GCM', length: KEY_LENGTH },
     false,
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   );
 }
 
@@ -56,7 +56,7 @@ export async function encryptData(data: unknown, password: string): Promise<Encr
   const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv, tagLength: TAG_LENGTH },
     key,
-    plaintext
+    plaintext,
   );
 
   return {
@@ -80,7 +80,7 @@ export async function encryptData(data: unknown, password: string): Promise<Encr
 
 export async function decryptData<T = unknown>(
   payload: EncryptedPayload,
-  password: string
+  password: string,
 ): Promise<T> {
   if (!password) throw new Error('Password required for decryption.');
 
@@ -102,7 +102,11 @@ export async function decryptData<T = unknown>(
     const salt = base64ToBytes(payload.kdf.salt);
     const iv = base64ToBytes(payload.cipher.iv);
     const ciphertext = base64ToBytes(payload.ciphertext);
-    if (salt.byteLength !== SALT_BYTES || iv.byteLength !== IV_BYTES || ciphertext.byteLength < 16) {
+    if (
+      salt.byteLength !== SALT_BYTES ||
+      iv.byteLength !== IV_BYTES ||
+      ciphertext.byteLength < 16
+    ) {
       throw new Error('Invalid encrypted payload');
     }
 
@@ -110,7 +114,7 @@ export async function decryptData<T = unknown>(
     const plaintext = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv, tagLength: payload.cipher.tagLength },
       key,
-      ciphertext
+      ciphertext,
     );
     return JSON.parse(new TextDecoder().decode(plaintext)) as T;
   } catch {

@@ -1,4 +1,11 @@
-import { DialItem, FolderItem, NoteItem, SearchEngine, AppSettings, SyncSettings } from '../types/opendial';
+import {
+  DialItem,
+  FolderItem,
+  NoteItem,
+  SearchEngine,
+  AppSettings,
+  SyncSettings,
+} from '../types/opendial';
 
 export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
   {

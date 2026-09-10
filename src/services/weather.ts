@@ -46,14 +46,18 @@ const WMO_CODE_MAP: Record<number, { condition: string; icon: string }> = {
   95: { condition: 'Thunderstorm', icon: '⚡' },
 };
 
-export async function fetchWeatherForCoords(lat: number, lon: number, customLabel?: string): Promise<WeatherData> {
+export async function fetchWeatherForCoords(
+  lat: number,
+  lon: number,
+  customLabel?: string,
+): Promise<WeatherData> {
   try {
     let resolvedCity = customLabel || 'Local Weather';
 
     // Attempt reverse geocoding to obtain human-readable city name
     try {
       const geoRes = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
       );
       if (geoRes.ok) {
         const geoJson = await geoRes.json();
@@ -68,7 +72,7 @@ export async function fetchWeatherForCoords(lat: number, lon: number, customLabe
     }
 
     const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`,
     );
 
     if (!weatherRes.ok) throw new Error('Failed to fetch weather');
@@ -149,7 +153,7 @@ export async function fetchWeatherForCity(cityName: string): Promise<WeatherData
   try {
     // 1. Geocode city name to lat/long using Open-Meteo Geocoding API
     const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanCity)}&count=1&language=en&format=json`
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanCity)}&count=1&language=en&format=json`,
     );
     const geoData = await geoRes.json();
     if (!geoData.results || geoData.results.length === 0) {

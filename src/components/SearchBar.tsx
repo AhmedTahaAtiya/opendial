@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Globe, Shield, Code, PlaySquare, MessageSquare, ArrowRight, CornerDownLeft, Sparkles } from 'lucide-react';
-import { SearchEngine } from '../types/opendial';
+import {
+  Search,
+  Globe,
+  Shield,
+  Code,
+  PlaySquare,
+  MessageSquare,
+  CornerDownLeft,
+} from 'lucide-react';
 import { DEFAULT_SEARCH_ENGINES } from '../data/initialData';
 
 interface SearchBarProps {
@@ -70,7 +77,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ currentEngineId, onEngineC
     }
 
     // Direct URL navigation detection (e.g. github.com, http(s)://..., or localhost:port)
-    const isDirectUrl = /^(https?:\/\/|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/.*)?$|localhost(:\d+)?(\/.*)?$)/i.test(cleanQuery);
+    const isDirectUrl =
+      /^(https?:\/\/|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\/.*)?$|localhost(:\d+)?(\/.*)?$)/i.test(
+        cleanQuery,
+      );
     if (isDirectUrl && !cleanQuery.includes(' ') && !cleanQuery.startsWith('!')) {
       const targetUrl = /^https?:\/\//i.test(cleanQuery) ? cleanQuery : `https://${cleanQuery}`;
       window.open(targetUrl, '_blank', 'noopener,noreferrer');
@@ -206,4 +216,3 @@ export const SearchBar: React.FC<SearchBarProps> = ({ currentEngineId, onEngineC
     </div>
   );
 };
-

@@ -8,3 +8,6 @@ coverage/
 !.env.example
 extension-dist/
 opendial-extension.zip
+test-results/
+playwright-report/
+.e2e/

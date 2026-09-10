@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Clock,
@@ -12,7 +12,6 @@ import {
   Trash2,
   ExternalLink,
   Bell,
-  Sparkles,
 } from 'lucide-react';
 import { NoteItem, RecentTabItem } from '../types/opendial';
 import { playAlarmChime } from '../services/audio';
@@ -53,7 +52,7 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
   const [newNoteText, setNewNoteText] = useState('');
 
   // Recently Closed Tabs (Clean state)
-  const [recentTabs, setRecentTabs] = useState<RecentTabItem[]>([]);
+  const [recentTabs, _setRecentTabs] = useState<RecentTabItem[]>([]);
 
   // Countdown interval
   useEffect(() => {
@@ -423,9 +422,7 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
         {/* Recent tabs */}
         {activeTab === 'recents' && (
           <div className="p-6 space-y-3">
-            <div className="text-xs text-slate-400">
-              Recently closed tabs history:
-            </div>
+            <div className="text-xs text-slate-400">Recently closed tabs history:</div>
 
             {recentTabs.length === 0 ? (
               <div className="text-center py-10 text-xs text-slate-500">
@@ -439,7 +436,9 @@ export const WidgetsModal: React.FC<WidgetsModalProps> = ({
                     className="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/50 hover:bg-slate-800 transition-colors"
                   >
                     <div className="overflow-hidden pr-2">
-                      <div className="text-xs font-semibold text-slate-200 truncate">{tab.title}</div>
+                      <div className="text-xs font-semibold text-slate-200 truncate">
+                        {tab.title}
+                      </div>
                       <div className="text-[10px] text-slate-500 truncate">{tab.url}</div>
                     </div>
 

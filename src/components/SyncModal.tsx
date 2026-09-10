@@ -7,13 +7,18 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
-  KeyRound,
   ShieldCheck,
   Server,
   UploadCloud,
   DownloadCloud,
 } from 'lucide-react';
-import { SyncSettings, SyncCredentials, SyncProviderType, ExportBackupData, RuntimeSyncSettings } from '../types/opendial';
+import {
+  SyncSettings,
+  SyncCredentials,
+  SyncProviderType,
+  ExportBackupData,
+  RuntimeSyncSettings,
+} from '../types/opendial';
 import { createSyncProvider, SyncResult } from '../services/sync';
 import { checkPasswordStrength } from '../services/crypto';
 
@@ -49,6 +54,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   const [webdavUser, setWebdavUser] = useState(syncSettings.webdav.username);
   const [webdavPass, setWebdavPass] = useState(syncCredentials.webdavPassword);
   const [webdavPath, setWebdavPath] = useState(syncSettings.webdav.path);
+  void setWebdavPath;
 
   // Cloud Drive tokens
   const [gdriveToken, setGdriveToken] = useState(syncCredentials.googleAccessToken);
@@ -123,7 +129,10 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
   const handleUploadNow = async () => {
     if (provider !== 'local' && !masterPassword) {
-      setSyncStatus({ success: false, message: 'Unlock the session to use mandatory encrypted cloud sync.' });
+      setSyncStatus({
+        success: false,
+        message: 'Unlock the session to use mandatory encrypted cloud sync.',
+      });
       onRequireUnlock();
       return;
     }
@@ -151,7 +160,10 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
   const handleDownloadNow = async () => {
     if (provider !== 'local' && !masterPassword) {
-      setSyncStatus({ success: false, message: 'Unlock the session to decrypt synced cloud data.' });
+      setSyncStatus({
+        success: false,
+        message: 'Unlock the session to decrypt synced cloud data.',
+      });
       onRequireUnlock();
       return;
     }
@@ -219,7 +231,9 @@ export const SyncModal: React.FC<SyncModalProps> = ({
             <ShieldCheck className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
             <div>
               <span className="font-bold text-white">Privacy Guarantee: </span>
-              OpenDial has zero centralized databases. Your bookmarks, custom dials, notes, and thumbnails are stored directly in your personal cloud storage (Google Drive, OneDrive, or self-hosted Nextcloud WebDAV).
+              OpenDial has zero centralized databases. Your bookmarks, custom dials, notes, and
+              thumbnails are stored directly in your personal cloud storage (Google Drive, OneDrive,
+              or self-hosted Nextcloud WebDAV).
             </div>
           </div>
 
@@ -232,45 +246,46 @@ export const SyncModal: React.FC<SyncModalProps> = ({
                   End-to-End Encryption (AES-GCM 256-bit)
                 </span>
               </div>
-              <span className="text-emerald-400 font-semibold text-xs">Mandatory for cloud sync</span>
+              <span className="text-emerald-400 font-semibold text-xs">
+                Mandatory for cloud sync
+              </span>
             </div>
 
             <div className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-slate-300">
-                    Session vault is {masterPassword ? 'unlocked' : 'locked'}. The password is memory-only.
-                  </span>
-                  {!masterPassword && (
-                    <button
-                      type="button"
-                      onClick={onRequireUnlock}
-                      className="shrink-0 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-emerald-400"
-                    >
-                      Unlock
-                    </button>
-                  )}
-                </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-slate-300">
+                  Session vault is {masterPassword ? 'unlocked' : 'locked'}. The password is
+                  memory-only.
+                </span>
+                {!masterPassword && (
+                  <button
+                    type="button"
+                    onClick={onRequireUnlock}
+                    className="shrink-0 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-bold text-slate-950 hover:bg-emerald-400"
+                  >
+                    Unlock
+                  </button>
+                )}
+              </div>
 
-                <div className="flex items-center justify-between text-[11px] pt-1">
-                  <span className="text-slate-400">
-                    Strength:{' '}
-                    <span
-                      className={`font-semibold ${
-                        passwordStrength.score >= 4
-                          ? 'text-emerald-400'
-                          : passwordStrength.score >= 3
+              <div className="flex items-center justify-between text-[11px] pt-1">
+                <span className="text-slate-400">
+                  Strength:{' '}
+                  <span
+                    className={`font-semibold ${
+                      passwordStrength.score >= 4
+                        ? 'text-emerald-400'
+                        : passwordStrength.score >= 3
                           ? 'text-amber-400'
                           : 'text-rose-400'
-                      }`}
-                    >
-                      {passwordStrength.label}
-                    </span>
+                    }`}
+                  >
+                    {passwordStrength.label}
                   </span>
-                  <span className="text-slate-500">
-                    Data is encrypted locally before upload
-                  </span>
-                </div>
+                </span>
+                <span className="text-slate-500">Data is encrypted locally before upload</span>
               </div>
+            </div>
           </div>
 
           {/* Sync provider selector */}
@@ -411,7 +426,8 @@ export const SyncModal: React.FC<SyncModalProps> = ({
                   className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-xs font-mono"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Syncs directly to your private Google Drive file: <code>opendial_backup.enc.json</code>.
+                  Syncs directly to your private Google Drive file:{' '}
+                  <code>opendial_backup.enc.json</code>.
                 </p>
               </div>
             </div>
@@ -446,7 +462,8 @@ export const SyncModal: React.FC<SyncModalProps> = ({
                 Local Encrypted Vault
               </div>
               <p className="text-xs text-slate-300">
-                Save an encrypted file directly onto your computer disk, USB drive, or private storage.
+                Save an encrypted file directly onto your computer disk, USB drive, or private
+                storage.
               </p>
             </div>
           )}
@@ -521,8 +538,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
           {syncSettings.lastSyncTimestamp && (
             <div className="text-[11px] text-slate-500">
-              Last synced:{' '}
-              {new Date(syncSettings.lastSyncTimestamp).toLocaleDateString()}{' '}
+              Last synced: {new Date(syncSettings.lastSyncTimestamp).toLocaleDateString()}{' '}
               {new Date(syncSettings.lastSyncTimestamp).toLocaleTimeString()}
             </div>
           )}

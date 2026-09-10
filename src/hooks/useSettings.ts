@@ -5,7 +5,7 @@ import { loadFromLocal, saveToLocal } from '../services/storage';
 
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>(() =>
-    loadFromLocal<AppSettings>('settings', INITIAL_SETTINGS)
+    loadFromLocal<AppSettings>('settings', INITIAL_SETTINGS),
   );
 
   // Synchronize settings to local storage
@@ -13,12 +13,9 @@ export function useSettings() {
     saveToLocal('settings', settings);
   }, [settings]);
 
-  const updateSettings = useCallback(
-    (newOrPartial: Partial<AppSettings> | AppSettings) => {
-      setSettings((prev) => ({ ...prev, ...newOrPartial }));
-    },
-    []
-  );
+  const updateSettings = useCallback((newOrPartial: Partial<AppSettings> | AppSettings) => {
+    setSettings((prev) => ({ ...prev, ...newOrPartial }));
+  }, []);
 
   const toggleProductivity = useCallback(() => {
     setSettings((prev) => ({
