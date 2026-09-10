@@ -4,7 +4,7 @@
 
 WebDAV, Google Drive, and OneDrive uploads accept backup objects internally but require a non-empty in-memory master password, encrypt before constructing the network request body, and send only the encrypted envelope. Missing passwords stop before `fetch`. Cloud downloads reject plaintext JSON and never fall back to treating it as backup data. The legacy `SyncSettings.e2eeEnabled` value is retained only for persisted-settings compatibility and is forced to `true` when settings are saved; provider code does not trust it.
 
-Local export semantics are unchanged: users may explicitly export plaintext JSON or an encrypted `.opendial` file. The local provider performs no network request.
+All providers (WebDAV, Google Drive, OneDrive, and local file export) require a non-empty in-memory master password, encrypt the backup before writing, and never fall back to plaintext. Missing passwords stop before the file is written. All downloads reject plaintext payloads and require the master password for decryption.
 
 ## Version 1 payload
 
