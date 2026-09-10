@@ -12,10 +12,10 @@ import { sanitizeSyncSettings } from '../services/backup';
 
 export function useSync() {
   const [syncSettings, setSyncSettings] = useState<SyncSettings>(() =>
-    loadSyncSettings(INITIAL_SYNC_SETTINGS)
+    loadSyncSettings(INITIAL_SYNC_SETTINGS),
   );
   const [syncCredentials, setSyncCredentials] = useState<SyncCredentials>(() =>
-    loadSyncCredentials()
+    loadSyncCredentials(),
   );
 
   // Synchronize sync settings to local storage (sanitized to remove any leakage)

@@ -1,16 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  X,
-  Globe,
-  Layers,
-  CloudSun,
-  Tv,
-  Upload,
-  Sparkles,
-  Plus,
-  Trash2,
-  Check,
-} from 'lucide-react';
+import { X, Globe, Layers, CloudSun, Tv, Upload, Plus, Trash2, Check } from 'lucide-react';
 import { DialItem, DialType, FirefoxContainer, FolderItem, MultiPageLink } from '../types/opendial';
 import { saveThumbnailBlob } from '../services/storage';
 
@@ -35,7 +24,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
   const [title, setTitle] = useState(initialDial?.title || '');
   const [url, setUrl] = useState(initialDial?.url || '');
   const [folderId, setFolderId] = useState<string | null>(
-    initialDial?.folderId !== undefined ? initialDial.folderId : defaultFolderId || null
+    initialDial?.folderId !== undefined ? initialDial.folderId : defaultFolderId || null,
   );
   const [container, setContainer] = useState<FirefoxContainer>(initialDial?.container || 'none');
   const [colSpan, setColSpan] = useState<1 | 2 | 3>(initialDial?.colSpan || 1);
@@ -49,7 +38,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
   const [liveZoom, setLiveZoom] = useState<number>(initialDial?.liveZoom || 100);
   const [liveCropTop, setLiveCropTop] = useState<number>(initialDial?.liveCropTop || 0);
   const [liveRefreshInterval, setLiveRefreshInterval] = useState<number>(
-    initialDial?.liveRefreshInterval || 0
+    initialDial?.liveRefreshInterval || 0,
   );
 
   // Multi-page specific
@@ -57,13 +46,11 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
     initialDial?.multiLinks || [
       { id: '1', title: 'Home', url: 'https://example.com' },
       { id: '2', title: 'Dashboard', url: 'https://example.com/dash' },
-    ]
+    ],
   );
 
   // Weather dial specific
-  const [weatherLocation, setWeatherLocation] = useState(
-    initialDial?.weatherLocation || ''
-  );
+  const [weatherLocation, setWeatherLocation] = useState(initialDial?.weatherLocation || '');
 
   // Custom thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState(initialDial?.customThumbnail || '');
@@ -76,7 +63,9 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
       setType(initialDial.type || 'standard');
       setTitle(initialDial.title || '');
       setUrl(initialDial.url || '');
-      setFolderId(initialDial.folderId !== undefined ? initialDial.folderId : defaultFolderId || null);
+      setFolderId(
+        initialDial.folderId !== undefined ? initialDial.folderId : defaultFolderId || null,
+      );
       setContainer(initialDial.container || 'none');
       setColSpan(initialDial.colSpan || 1);
       setRowSpan(initialDial.rowSpan || 1);
@@ -91,7 +80,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
         initialDial.multiLinks || [
           { id: '1', title: 'Home', url: 'https://example.com' },
           { id: '2', title: 'Dashboard', url: 'https://example.com/dash' },
-        ]
+        ],
       );
       setWeatherLocation(initialDial.weatherLocation || '');
       setThumbnailUrl(initialDial.customThumbnail || '');
@@ -146,16 +135,11 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
   };
 
   const handleAddMultiLink = () => {
-    setMultiLinks([
-      ...multiLinks,
-      { id: `ml_${Date.now()}`, title: 'New Link', url: 'https://' },
-    ]);
+    setMultiLinks([...multiLinks, { id: `ml_${Date.now()}`, title: 'New Link', url: 'https://' }]);
   };
 
   const handleUpdateMultiLink = (id: string, field: 'title' | 'url', val: string) => {
-    setMultiLinks(
-      multiLinks.map((link) => (link.id === id ? { ...link, [field]: val } : link))
-    );
+    setMultiLinks(multiLinks.map((link) => (link.id === id ? { ...link, [field]: val } : link)));
   };
 
   const handleDeleteMultiLink = (id: string) => {
@@ -607,9 +591,7 @@ export const EditDialModal: React.FC<EditDialModalProps> = ({
           {/* Focus mode preference */}
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/60">
             <div>
-              <div className="text-xs font-semibold text-slate-200">
-                Distracting / Leisure Dial
-              </div>
+              <div className="text-xs font-semibold text-slate-200">Distracting / Leisure Dial</div>
               <div className="text-[11px] text-slate-400">
                 Automatically hide or dim when Productivity Focus Mode is enabled.
               </div>

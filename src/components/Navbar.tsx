@@ -58,14 +58,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
-        })
+        }),
       );
       setDateString(
-        now.toLocaleDateString('en-US', {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-        }).toUpperCase()
+        now
+          .toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+          })
+          .toUpperCase(),
       );
     };
     updateTime();
@@ -167,7 +169,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
             title="Toggle Focus Mode (Conceals distracting dials)"
           >
-            <Zap className={`w-3.5 h-3.5 ${isProductivityMode ? 'text-amber-400' : 'text-slate-400'}`} />
+            <Zap
+              className={`w-3.5 h-3.5 ${isProductivityMode ? 'text-amber-400' : 'text-slate-400'}`}
+            />
             <span className="hidden sm:inline">Focus</span>
             {isProductivityMode && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -182,7 +186,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
                 : 'bg-[#141822] border-[#222a3a] text-slate-300 hover:bg-[#1a202c] hover:text-white'
             }`}
-            title={isUnlocked ? 'Lock and clear the master password from memory' : 'Unlock encrypted operations for this session'}
+            title={
+              isUnlocked
+                ? 'Lock and clear the master password from memory'
+                : 'Unlock encrypted operations for this session'
+            }
           >
             {isUnlocked ? <Lock className="w-3.5 h-3.5" /> : <KeyRound className="w-3.5 h-3.5" />}
             <span className="hidden md:inline">{isUnlocked ? 'Lock' : 'Unlock'}</span>
@@ -209,10 +217,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               {syncSettings.provider === 'webdav'
                 ? 'WebDAV'
                 : syncSettings.provider === 'gdrive'
-                ? 'GDrive'
-                : syncSettings.provider === 'onedrive'
-                ? 'OneDrive'
-                : 'Vault'}
+                  ? 'GDrive'
+                  : syncSettings.provider === 'onedrive'
+                    ? 'OneDrive'
+                    : 'Vault'}
             </span>
           </button>
 

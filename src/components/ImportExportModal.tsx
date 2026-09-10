@@ -4,7 +4,6 @@ import {
   Download,
   Upload,
   FileCode,
-  Lock,
   Package,
   CheckCircle2,
   AlertCircle,
@@ -35,7 +34,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
   onRequireUnlock,
 }) => {
   const [encryptExport, setEncryptExport] = useState(true);
-  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [isGeneratingExtension, setIsGeneratingExtension] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +62,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
       if (encryptExport) {
         if (!masterPassword) {
-          setStatusMessage({ type: 'error', text: 'Unlock the session before creating an encrypted export.' });
+          setStatusMessage({
+            type: 'error',
+            text: 'Unlock the session before creating an encrypted export.',
+          });
           onRequireUnlock();
           return;
         }
@@ -111,7 +116,10 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
         setStatusMessage({ type: 'success', text: 'Encrypted backup decrypted and restored!' });
       } else if (parsed.dials && Array.isArray(parsed.dials)) {
         onRestoreData(sanitizeImportedBackup(parsed));
-        setStatusMessage({ type: 'success', text: `Restored ${parsed.dials.length} speed dials; cloud credentials were cleared.` });
+        setStatusMessage({
+          type: 'success',
+          text: `Restored ${parsed.dials.length} speed dials; cloud credentials were cleared.`,
+        });
       } else {
         setStatusMessage({ type: 'error', text: 'Unrecognized backup file format.' });
       }
@@ -240,7 +248,8 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-300">
-              Package OpenDial with your current bookmarks and dials into an unpacked extension ZIP. Ready to install in Chrome, Brave, Firefox, or Edge.
+              Package OpenDial with your current bookmarks and dials into an unpacked extension ZIP.
+              Ready to install in Chrome, Brave, Firefox, or Edge.
             </p>
             <button
               type="button"
@@ -275,9 +284,19 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
 
             {encryptExport && (
               <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900/60 p-2.5 text-xs text-slate-300">
-                <span>{masterPassword ? 'Session unlocked; the in-memory password will encrypt this file.' : 'Unlock the session to create an encrypted vault.'}</span>
+                <span>
+                  {masterPassword
+                    ? 'Session unlocked; the in-memory password will encrypt this file.'
+                    : 'Unlock the session to create an encrypted vault.'}
+                </span>
                 {!masterPassword && (
-                  <button type="button" onClick={onRequireUnlock} className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 font-bold text-white hover:bg-sky-500">Unlock</button>
+                  <button
+                    type="button"
+                    onClick={onRequireUnlock}
+                    className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 font-bold text-white hover:bg-sky-500"
+                  >
+                    Unlock
+                  </button>
                 )}
               </div>
             )}
@@ -301,7 +320,13 @@ export const ImportExportModal: React.FC<ImportExportModalProps> = ({
             <div className="flex items-center justify-between gap-3 rounded-lg bg-slate-900/60 p-2.5 text-xs text-slate-300">
               <span>Encrypted imports use the current session's memory-only master password.</span>
               {!masterPassword && (
-                <button type="button" onClick={onRequireUnlock} className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 font-bold text-white hover:bg-sky-500">Unlock</button>
+                <button
+                  type="button"
+                  onClick={onRequireUnlock}
+                  className="shrink-0 rounded-lg bg-sky-600 px-3 py-1.5 font-bold text-white hover:bg-sky-500"
+                >
+                  Unlock
+                </button>
               )}
             </div>
 

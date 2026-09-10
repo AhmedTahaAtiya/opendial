@@ -12,6 +12,7 @@ import { useSync } from './hooks/useSync';
 import { useVault } from './hooks/useVault';
 import { useModals } from './hooks/useModals';
 import { useBackup } from './hooks/useBackup';
+import { useStorageMigrations } from './hooks/useStorageMigrations';
 
 import { Navbar } from './components/Navbar';
 import { SearchBar } from './components/SearchBar';
@@ -25,6 +26,10 @@ import { SettingsModal } from './components/SettingsModal';
 import { UnlockModal } from './components/UnlockModal';
 
 export default function App() {
+  // Run storage migrations on startup before loading any state
+  const { migrationComplete, migrationError } = useStorageMigrations();
+  void migrationComplete;
+
   const {
     dials,
     setDials,
@@ -49,14 +54,7 @@ export default function App() {
     resetFolders,
   } = useFolders();
 
-  const {
-    notes,
-    setNotes,
-    addNote,
-    toggleNote,
-    deleteNote,
-    resetNotes,
-  } = useNotes();
+  const { notes, setNotes, addNote, toggleNote, deleteNote, resetNotes } = useNotes();
 
   const {
     settings,
@@ -69,21 +67,10 @@ export default function App() {
     resetSettings,
   } = useSettings();
 
-  const {
-    syncSettings,
-    setSyncSettings,
-    syncCredentials,
-    setSyncCredentials,
-    resetSync,
-  } = useSync();
+  const { syncSettings, setSyncSettings, syncCredentials, setSyncCredentials, resetSync } =
+    useSync();
 
-  const {
-    masterPassword,
-    isUnlocked,
-    unlock,
-    lock,
-    resetVault,
-  } = useVault();
+  const { masterPassword, isUnlocked, unlock, lock, resetVault } = useVault();
 
   const {
     isEditDialOpen,
@@ -144,6 +131,11 @@ export default function App() {
       style={getBackgroundInlineStyle()}
       id="opendial-app-root"
     >
+      {migrationError && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-rose-500/90 text-white text-xs font-mono px-4 py-2 text-center">
+          Storage migration warning: {migrationError}. Some data may not be available.
+        </div>
+      )}
       {/* Visual Ambient Glows for 'mesh' background style */}
       {settings.backgroundStyle === 'mesh' && !settings.customWallpaperUrl && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -260,11 +252,7 @@ export default function App() {
         defaultFolderId={targetFolderForNewDial}
       />
 
-      <NewFolderModal
-        isOpen={isNewFolderOpen}
-        onClose={closeNewFolder}
-        onSaveFolder={saveFolder}
-      />
+      <NewFolderModal isOpen={isNewFolderOpen} onClose={closeNewFolder} onSaveFolder={saveFolder} />
 
       <WidgetsModal
         isOpen={isWidgetsOpen}

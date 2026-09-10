@@ -5,7 +5,7 @@ import { loadFromLocal, saveToLocal } from '../services/storage';
 
 export function useNotes() {
   const [notes, setNotes] = useState<NoteItem[]>(() =>
-    loadFromLocal<NoteItem[]>('notes', INITIAL_NOTES)
+    loadFromLocal<NoteItem[]>('notes', INITIAL_NOTES),
   );
 
   // Synchronize notes to local storage
@@ -24,9 +24,7 @@ export function useNotes() {
   }, []);
 
   const toggleNote = useCallback((id: string) => {
-    setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isCompleted: !n.isCompleted } : n))
-    );
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, isCompleted: !n.isCompleted } : n)));
   }, []);
 
   const deleteNote = useCallback((id: string) => {

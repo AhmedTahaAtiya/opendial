@@ -5,7 +5,7 @@ import { loadFromLocal, saveToLocal } from '../services/storage';
 
 export function useFolders() {
   const [folders, setFolders] = useState<FolderItem[]>(() =>
-    loadFromLocal<FolderItem[]>('folders', INITIAL_FOLDERS)
+    loadFromLocal<FolderItem[]>('folders', INITIAL_FOLDERS),
   );
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [activeTagFilter, setActiveTagFilter] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function useFolders() {
         onFolderDeleted(folderId);
       }
     },
-    []
+    [],
   );
 
   const resetFolders = useCallback(() => {

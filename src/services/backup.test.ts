@@ -5,11 +5,7 @@ import { INITIAL_SETTINGS, INITIAL_SYNC_SETTINGS } from '../data/initialData';
 import { decryptData } from './crypto';
 import { BACKUP_SCHEMA_VERSION, createPortableBackup, sanitizeImportedBackup } from './backup';
 import { generateExtensionZip } from './extensionExporter';
-import {
-  GoogleDriveSyncProvider,
-  OneDriveSyncProvider,
-  WebDAVSyncProvider,
-} from './sync';
+import { GoogleDriveSyncProvider, OneDriveSyncProvider, WebDAVSyncProvider } from './sync';
 import type { ExportBackupData } from '../types/opendial';
 
 const secrets = {
@@ -40,7 +36,10 @@ function legacyBackup(): ExportBackupData {
 
 function assertCredentialFree(value: unknown) {
   const serialized = JSON.stringify(value);
-  assert.doesNotMatch(serialized, /accessToken|webdavPassword|googleAccessToken|oneDriveAccessToken/);
+  assert.doesNotMatch(
+    serialized,
+    /accessToken|webdavPassword|googleAccessToken|oneDriveAccessToken/,
+  );
   assert.doesNotMatch(serialized, /"password"/);
   for (const secret of Object.values(secrets)) assert.ok(!serialized.includes(secret));
 }
@@ -82,30 +81,74 @@ test('rejects malformed roots and missing or invalid versions', () => {
     assert.throws(() => sanitizeImportedBackup(value), /payload must be an object/);
   }
   assert.throws(() => sanitizeImportedBackup({ dials: [] }), /version must be a string/);
-  assert.throws(() => sanitizeImportedBackup({ version: 2, dials: [] }), /version must be a string/);
-  assert.throws(() => sanitizeImportedBackup({ version: 'v2', dials: [] }), /semantic version format/);
+  assert.throws(
+    () => sanitizeImportedBackup({ version: 2, dials: [] }),
+    /version must be a string/,
+  );
+  assert.throws(
+    () => sanitizeImportedBackup({ version: 'v2', dials: [] }),
+    /semantic version format/,
+  );
 });
 
 test('rejects unknown and future backup versions', () => {
-  assert.throws(() => sanitizeImportedBackup({ version: '1.5.0', dials: [] }), /Unsupported backup version/);
-  assert.throws(() => sanitizeImportedBackup({ version: '3.0.0', dials: [] }), /Unsupported backup version/);
+  assert.throws(
+    () => sanitizeImportedBackup({ version: '1.5.0', dials: [] }),
+    /Unsupported backup version/,
+  );
+  assert.throws(
+    () => sanitizeImportedBackup({ version: '3.0.0', dials: [] }),
+    /Unsupported backup version/,
+  );
 });
 
 test('rejects malformed nested application values', () => {
   const base = legacyBackup();
   const dial = {
-    id: 'dial-1', title: 'Dial', url: 'https://example.com', type: 'multipage', createdAt: 1,
+    id: 'dial-1',
+    title: 'Dial',
+    url: 'https://example.com',
+    type: 'multipage',
+    createdAt: 1,
     multiLinks: [{ id: 'link-1', title: 'Link', url: 'https://example.com/link' }],
   };
   assert.throws(
-    () => sanitizeImportedBackup({ ...base, dials: [{ ...dial, multiLinks: [{ ...dial.multiLinks[0], url: 7 }] }] }),
-    /dials\[0\]\.multiLinks\[0\]\.url must be a string/
+    () =>
+      sanitizeImportedBackup({
+        ...base,
+        dials: [{ ...dial, multiLinks: [{ ...dial.multiLinks[0], url: 7 }] }],
+      }),
+    /dials\[0\]\.multiLinks\[0\]\.url must be a string/,
   );
-  assert.throws(() => sanitizeImportedBackup({ ...base, folders: [{ id: 'f', title: 4, createdAt: 1 }] }), /folders\[0\]\.title/);
-  assert.throws(() => sanitizeImportedBackup({ ...base, notes: [{ id: 'n', text: 'x', isCompleted: 'no', createdAt: 1 }] }), /notes\[0\]\.isCompleted/);
-  assert.throws(() => sanitizeImportedBackup({ ...base, settings: { ...base.settings, theme: 'invalid' } }), /settings\.theme/);
-  assert.throws(() => sanitizeImportedBackup({ ...base, syncSettings: { ...base.syncSettings, enabled: 'yes' } }), /syncSettings\.enabled/);
-  assert.throws(() => sanitizeImportedBackup({ ...base, syncSettings: { ...base.syncSettings, webdav: { ...base.syncSettings.webdav, path: 9 } } }), /syncSettings\.webdav\.path/);
+  assert.throws(
+    () => sanitizeImportedBackup({ ...base, folders: [{ id: 'f', title: 4, createdAt: 1 }] }),
+    /folders\[0\]\.title/,
+  );
+  assert.throws(
+    () =>
+      sanitizeImportedBackup({
+        ...base,
+        notes: [{ id: 'n', text: 'x', isCompleted: 'no', createdAt: 1 }],
+      }),
+    /notes\[0\]\.isCompleted/,
+  );
+  assert.throws(
+    () => sanitizeImportedBackup({ ...base, settings: { ...base.settings, theme: 'invalid' } }),
+    /settings\.theme/,
+  );
+  assert.throws(
+    () =>
+      sanitizeImportedBackup({ ...base, syncSettings: { ...base.syncSettings, enabled: 'yes' } }),
+    /syncSettings\.enabled/,
+  );
+  assert.throws(
+    () =>
+      sanitizeImportedBackup({
+        ...base,
+        syncSettings: { ...base.syncSettings, webdav: { ...base.syncSettings.webdav, path: 9 } },
+      }),
+    /syncSettings\.webdav\.path/,
+  );
 });
 
 test('extension config seed omits legacy credentials', async () => {
@@ -126,9 +169,18 @@ test('cloud plaintext is sanitized before encryption for every provider', async 
   try {
     const backup = legacyBackup();
     const password = 'correct horse battery staple';
-    await new WebDAVSyncProvider(INITIAL_SYNC_SETTINGS.webdav, secrets.webdav).upload(backup, password);
-    await new GoogleDriveSyncProvider(INITIAL_SYNC_SETTINGS.gdrive, secrets.google).upload(backup, password);
-    await new OneDriveSyncProvider(INITIAL_SYNC_SETTINGS.onedrive, secrets.oneDrive).upload(backup, password);
+    await new WebDAVSyncProvider(INITIAL_SYNC_SETTINGS.webdav, secrets.webdav).upload(
+      backup,
+      password,
+    );
+    await new GoogleDriveSyncProvider(INITIAL_SYNC_SETTINGS.gdrive, secrets.google).upload(
+      backup,
+      password,
+    );
+    await new OneDriveSyncProvider(INITIAL_SYNC_SETTINGS.onedrive, secrets.oneDrive).upload(
+      backup,
+      password,
+    );
 
     assert.equal(bodies.length, 3);
     const envelopes = [
@@ -148,16 +200,34 @@ test('cloud plaintext is sanitized before encryption for every provider', async 
 test('rejects dial URL with invalid protocol (javascript:)', () => {
   const base = legacyBackup();
   assert.throws(
-    () => sanitizeImportedBackup({ ...base, dials: [{ id: 'd1', title: 'Dial', url: 'javascript:alert(1)', type: 'standard', createdAt: 1 }] }),
-    /dials\[0\]\.url must be a valid HTTP\/HTTPS URL/
+    () =>
+      sanitizeImportedBackup({
+        ...base,
+        dials: [
+          { id: 'd1', title: 'Dial', url: 'javascript:alert(1)', type: 'standard', createdAt: 1 },
+        ],
+      }),
+    /dials\[0\]\.url must be a valid HTTP\/HTTPS URL/,
   );
 });
 
 test('rejects dial URL with invalid protocol (data:) when not image', () => {
   const base = legacyBackup();
   assert.throws(
-    () => sanitizeImportedBackup({ ...base, dials: [{ id: 'd1', title: 'Dial', url: 'data:text/html,<script>alert(1)</script>', type: 'standard', createdAt: 1 }] }),
-    /dials\[0\]\.url must be a valid HTTP\/HTTPS URL/
+    () =>
+      sanitizeImportedBackup({
+        ...base,
+        dials: [
+          {
+            id: 'd1',
+            title: 'Dial',
+            url: 'data:text/html,<script>alert(1)</script>',
+            type: 'standard',
+            createdAt: 1,
+          },
+        ],
+      }),
+    /dials\[0\]\.url must be a valid HTTP\/HTTPS URL/,
   );
 });
 
@@ -165,7 +235,9 @@ test('accepts valid HTTPS URL for dial', () => {
   const base = legacyBackup();
   const restored = sanitizeImportedBackup({
     ...base,
-    dials: [{ id: 'd1', title: 'Test', url: 'https://example.com/page', type: 'standard', createdAt: 1 }],
+    dials: [
+      { id: 'd1', title: 'Test', url: 'https://example.com/page', type: 'standard', createdAt: 1 },
+    ],
   });
   assert.equal(restored.dials[0].url, 'https://example.com/page');
 });
@@ -173,11 +245,21 @@ test('accepts valid HTTPS URL for dial', () => {
 test('rejects multi-link URL with invalid protocol', () => {
   const base = legacyBackup();
   assert.throws(
-    () => sanitizeImportedBackup({ ...base, dials: [{ 
-      id: 'd1', title: 'Dial', url: 'https://example.com', type: 'multipage', createdAt: 1,
-      multiLinks: [{ id: 'l1', title: 'Link', url: 'ftp://evil.com' }]
-    }] }),
-    /dials\[0\]\.multiLinks\[0\]\.url must be a valid HTTP\/HTTPS URL/
+    () =>
+      sanitizeImportedBackup({
+        ...base,
+        dials: [
+          {
+            id: 'd1',
+            title: 'Dial',
+            url: 'https://example.com',
+            type: 'multipage',
+            createdAt: 1,
+            multiLinks: [{ id: 'l1', title: 'Link', url: 'ftp://evil.com' }],
+          },
+        ],
+      }),
+    /dials\[0\]\.multiLinks\[0\]\.url must be a valid HTTP\/HTTPS URL/,
   );
 });
 
@@ -185,10 +267,16 @@ test('accepts valid multi-link URLs', () => {
   const base = legacyBackup();
   const restored = sanitizeImportedBackup({
     ...base,
-    dials: [{ 
-      id: 'd1', title: 'Dial', url: 'https://example.com', type: 'multipage', createdAt: 1,
-      multiLinks: [{ id: 'l1', title: 'Link', url: 'https://example.com/link' }]
-    }],
+    dials: [
+      {
+        id: 'd1',
+        title: 'Dial',
+        url: 'https://example.com',
+        type: 'multipage',
+        createdAt: 1,
+        multiLinks: [{ id: 'l1', title: 'Link', url: 'https://example.com/link' }],
+      },
+    ],
   });
   assert.equal(restored.dials[0].multiLinks![0].url, 'https://example.com/link');
 });

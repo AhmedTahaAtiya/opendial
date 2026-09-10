@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Plus, FolderPlus, ArrowLeft, Filter, X, ChevronRight, Hash, Trash2 } from 'lucide-react';
+import { Plus, FolderPlus, ArrowLeft, Filter, X, ChevronRight, Trash2 } from 'lucide-react';
 import { DialItem, FolderItem } from '../types/opendial';
 import { DialCard } from './DialCard';
 
@@ -43,14 +43,10 @@ export const DialGrid: React.FC<DialGridProps> = ({
   onRecordClick,
 }) => {
   // Collect all unique tags for the filter bar
-  const allTags = Array.from(
-    new Set(dials.flatMap((d) => d.tags || []).filter(Boolean))
-  ).sort();
+  const allTags = Array.from(new Set(dials.flatMap((d) => d.tags || []).filter(Boolean))).sort();
 
   // Active folder details if any
-  const currentFolder = activeFolderId
-    ? folders.find((f) => f.id === activeFolderId)
-    : null;
+  const currentFolder = activeFolderId ? folders.find((f) => f.id === activeFolderId) : null;
 
   // Filter dials based on active folder and active tag
   const filteredDials = dials.filter((dial) => {
@@ -82,7 +78,11 @@ export const DialGrid: React.FC<DialGridProps> = ({
 
       // Ignore if typing inside input, textarea or contenteditable
       const activeTag = document.activeElement?.tagName.toLowerCase();
-      if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
+      if (
+        activeTag === 'input' ||
+        activeTag === 'textarea' ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
         return;
       }
 
@@ -115,14 +115,14 @@ export const DialGrid: React.FC<DialGridProps> = ({
         ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
         : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
       : viewDensity === 'editorial'
-      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-      : gridColumns === 4
-      ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-      : gridColumns === 6
-      ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
-      : gridColumns === 7
-      ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7'
-      : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'; // default 5
+        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        : gridColumns === 4
+          ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+          : gridColumns === 6
+            ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+            : gridColumns === 7
+              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7'
+              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'; // default 5
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 pb-20" id="opendial-grid-section">
@@ -217,7 +217,9 @@ export const DialGrid: React.FC<DialGridProps> = ({
             url: '',
             type: 'folder',
             folderId: folder.id,
-            bgColor: folder.color ? `linear-gradient(135deg, ${folder.color}15, #10151f)` : undefined,
+            bgColor: folder.color
+              ? `linear-gradient(135deg, ${folder.color}15, #10151f)`
+              : undefined,
             createdAt: folder.createdAt,
           };
           return (
@@ -308,4 +310,3 @@ export const DialGrid: React.FC<DialGridProps> = ({
     </div>
   );
 };
-

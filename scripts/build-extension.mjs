@@ -22,9 +22,19 @@ await rm(output, { recursive: true, force: true });
 await rm(zipPath, { force: true });
 await build({ root });
 await cp(dist, output, { recursive: true });
-await writeFile(resolve(output, 'README.txt'), 'OpenDial offline New Tab extension. Load this directory unpacked in a Chromium browser.\n');
+await writeFile(
+  resolve(output, 'README.txt'),
+  'OpenDial offline New Tab extension. Load this directory unpacked in a Chromium browser.\n',
+);
 const zip = new JSZip();
 await addDirectory(zip, output);
-await writeFile(zipPath, await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } }));
+await writeFile(
+  zipPath,
+  await zip.generateAsync({
+    type: 'nodebuffer',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 9 },
+  }),
+);
 console.log('Extension directory: ' + output);
 console.log('Extension ZIP: ' + zipPath);

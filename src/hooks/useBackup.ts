@@ -57,7 +57,7 @@ export function useBackup({
         settings,
         syncSettings,
       }),
-    [dials, folders, notes, settings, syncSettings]
+    [dials, folders, notes, settings, syncSettings],
   );
 
   const restoreBackup = useCallback(
@@ -72,7 +72,7 @@ export function useBackup({
       setSyncSettings(restored.syncSettings);
       resetSync();
     },
-    [setDials, setFolders, setNotes, setSettings, setSyncSettings, resetSync]
+    [setDials, setFolders, setNotes, setSettings, setSyncSettings, resetSync],
   );
 
   const resetDefaults = useCallback(() => {
@@ -83,14 +83,7 @@ export function useBackup({
     resetSettings();
     resetSync();
     resetVault();
-  }, [
-    resetDials,
-    resetFolders,
-    resetNotes,
-    resetSettings,
-    resetSync,
-    resetVault,
-  ]);
+  }, [resetDials, resetFolders, resetNotes, resetSettings, resetSync, resetVault]);
 
   return {
     currentBackupData,

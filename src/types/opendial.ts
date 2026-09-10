@@ -9,6 +9,73 @@ export interface MultiPageLink {
   icon?: string;
 }
 
+/** Base fields shared by all dial types. */
+export interface DialItemBase {
+  id: string;
+  title: string;
+  url: string;
+  folderId?: string | null; // null or undefined means root
+  icon?: string;
+  customThumbnail?: string; // base64 data URL or IndexedDB blob key
+  bgColor?: string;
+  textColor?: string;
+  tags?: string[];
+  container?: FirefoxContainer;
+  colSpan?: 1 | 2 | 3;
+  rowSpan?: 1 | 2;
+  createdAt: number;
+  clicksCount?: number;
+  isDistracting?: boolean; // for Productivity / Focus Mode
+}
+
+/** A standard speed dial — navigates to a URL on click. */
+export interface StandardDial extends DialItemBase {
+  type: 'standard';
+}
+
+/** A live dial — renders a sandboxed, auto-refreshing iframe. */
+export interface LiveDial extends DialItemBase {
+  type: 'live';
+  liveUrl?: string;
+  liveZoom?: number; // percentage, e.g. 100, 80, 120
+  liveCropTop?: number; // pixels
+  liveRefreshInterval?: number; // seconds, 0 = no auto refresh
+}
+
+/** A multi-page dial — bundles related links that open concurrently. */
+export interface MultiPageDial extends DialItemBase {
+  type: 'multipage';
+  multiLinks?: MultiPageLink[];
+}
+
+/** A weather dial — shows live meteorological telemetry with a 5-day forecast. */
+export interface WeatherDial extends DialItemBase {
+  type: 'weather';
+  weatherLocation?: string;
+}
+
+/** A folder dial — opens a drawer containing grouped dials. */
+export interface FolderDial extends DialItemBase {
+  type: 'folder';
+  folderId: string;
+}
+
+/**
+ * Discriminated union of all dial types, keyed on the `type` field.
+ *
+ * The flat `DialItem` interface (below) is retained for backward compatibility
+ * with existing backup data and serialization. New code should prefer
+ * `TypedDial` for type-safe narrowing.
+ */
+export type TypedDial = StandardDial | LiveDial | MultiPageDial | WeatherDial | FolderDial;
+
+/**
+ * Flat, backward-compatible dial type used for storage and serialization.
+ * Use `asTypedDial(item)` to narrow to `TypedDial` for type-safe access.
+ *
+ * @deprecated Prefer `TypedDial` in new code. This interface is retained
+ *   for compatibility with existing backup data and the storage layer.
+ */
 export interface DialItem {
   id: string;
   title: string;
@@ -35,6 +102,69 @@ export interface DialItem {
   createdAt: number;
   clicksCount?: number;
   isDistracting?: boolean; // for Productivity / Focus Mode
+}
+
+/**
+ * Type guard: narrows a flat `DialItem` to its specific `TypedDial` variant.
+ *
+ * @example
+ * if (isLiveDial(dial)) {
+ *   // TypeScript now knows dial.liveUrl, dial.liveZoom, etc. are available
+ *   console.log(dial.liveZoom);
+ * }
+ */
+export function asTypedDial(dial: DialItem): TypedDial {
+  switch (dial.type) {
+    case 'standard':
+      return dial as StandardDial;
+    case 'live':
+      return dial as LiveDial;
+    case 'multipage':
+      return dial as MultiPageDial;
+    case 'weather':
+      return dial as WeatherDial;
+    case 'folder':
+      return dial as FolderDial;
+    default: {
+      const _exhaustive: never = dial.type;
+      return _exhaustive;
+    }
+  }
+}
+
+/**
+ * Type guard: checks whether a flat `DialItem` is a LiveDial.
+ */
+export function isLiveDial(dial: DialItem): dial is LiveDial {
+  return dial.type === 'live';
+}
+
+/**
+ * Type guard: checks whether a flat `DialItem` is a MultiPageDial.
+ */
+export function isMultiPageDial(dial: DialItem): dial is MultiPageDial {
+  return dial.type === 'multipage';
+}
+
+/**
+ * Type guard: checks whether a flat `DialItem` is a WeatherDial.
+ */
+export function isWeatherDial(dial: DialItem): dial is WeatherDial {
+  return dial.type === 'weather';
+}
+
+/**
+ * Type guard: checks whether a flat `DialItem` is a FolderDial.
+ */
+export function isFolderDial(dial: DialItem): dial is FolderDial {
+  return dial.type === 'folder';
+}
+
+/**
+ * Type guard: checks whether a flat `DialItem` is a StandardDial.
+ */
+export function isStandardDial(dial: DialItem): dial is StandardDial {
+  return dial.type === 'standard';
 }
 
 export interface FolderItem {

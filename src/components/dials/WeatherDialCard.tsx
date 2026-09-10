@@ -66,7 +66,7 @@ export const WeatherDialCard: React.FC<WeatherDialCardProps> = ({
               setIsDetectingGeo(false);
             }
           },
-          { timeout: 7000, enableHighAccuracy: false }
+          { timeout: 7000, enableHighAccuracy: false },
         );
       }
     }
@@ -105,7 +105,7 @@ export const WeatherDialCard: React.FC<WeatherDialCardProps> = ({
         setIsDetectingGeo(false);
         setIsEditingLocation(true);
       },
-      { timeout: 8000, enableHighAccuracy: false }
+      { timeout: 8000, enableHighAccuracy: false },
     );
   };
 
@@ -329,7 +329,9 @@ export const WeatherDialCard: React.FC<WeatherDialCardProps> = ({
               <div key={idx} className="flex flex-col items-center">
                 <span className="text-[10px] font-mono text-slate-400">{day.dayName}</span>
                 <span className="text-sm my-0.5">{day.icon}</span>
-                <span className="text-[11px] font-mono font-bold text-slate-200">{day.tempMax}°</span>
+                <span className="text-[11px] font-mono font-bold text-slate-200">
+                  {day.tempMax}°
+                </span>
               </div>
             )) || (
               <div className="col-span-5 text-center text-[10px] font-mono text-slate-500 py-1">

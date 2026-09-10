@@ -77,9 +77,7 @@ export const NewFolderModal: React.FC<NewFolderModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              Folder Name *
-            </label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Folder Name *</label>
             <input
               type="text"
               required

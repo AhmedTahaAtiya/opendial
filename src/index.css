@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @layer base {
   :root {
@@ -14,12 +14,18 @@
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.025em;
   }
 
-  code, kbd, pre, .font-mono {
+  code,
+  kbd,
+  pre,
+  .font-mono {
     font-family: var(--font-mono);
   }
 }
@@ -27,8 +33,9 @@
 /* Subtle architectural coordinate grid background */
 .bg-grid-subtle {
   background-size: 32px 32px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
 }
 
 .bg-dot-matrix {
@@ -75,4 +82,3 @@
   width: 0 !important;
   height: 0 !important;
 }
-
